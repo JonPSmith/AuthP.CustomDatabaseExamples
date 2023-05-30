@@ -1,0 +1,24 @@
+﻿{
+  "ConnectionStrings": {
+    "DefaultConnection": "Data source={AppDir}\\PrimaryShardingDatabase.sqlite"
+  },
+  "ShardingDatabases": [
+    {
+      "Name": "Default Database",
+      "ConnectionName": "DefaultConnection",
+      "DatabaseType": "Sqlite"
+    },
+    {
+      "Name": "Another",
+      "DatabaseName": "AnotherDatabase",
+      "ConnectionName": "DefaultConnection",
+      "DatabaseType": "Sqlite"
+    },
+    {
+      "Name": "Bad: No DatabaseName",
+      "DatabaseName": null,
+      "ConnectionName": "DefaultConnection",
+      "DatabaseType": "Sqlite"
+    }
+  ]
+}

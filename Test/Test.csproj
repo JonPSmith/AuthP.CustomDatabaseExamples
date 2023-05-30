@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net6.0</TargetFramework>
+		<Nullable>enable</Nullable>
+
+		<IsPackable>false</IsPackable>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="EfCore.TestSupport" Version="5.3.0" />
+		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.3.2" />
+		<PackageReference Include="Net.LocalizeMessagesAndErrors" Version="1.0.0" />
+		<PackageReference Include="xunit" Version="2.4.2" />
+		<PackageReference Include="xunit.runner.visualstudio" Version="2.4.5">
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+			<PrivateAssets>all</PrivateAssets>
+		</PackageReference>
+		<PackageReference Include="coverlet.collector" Version="3.1.2">
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+			<PrivateAssets>all</PrivateAssets>
+		</PackageReference>
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\CustomDatabase1.InvoiceCode\CustomDatabase1.InvoiceCode.csproj" />
+		<ProjectReference Include="..\CustomDatabase1.SqliteCustomParts\CustomDatabase1.SqliteCustomParts.csproj" />
+		<ProjectReference Include="..\CustomDatabase1.WebApp\CustomDatabase1.WebApp.csproj" />
+		<ProjectReference Include="..\CustomDatabase2.InvoiceCode.Sharding\CustomDatabase2.InvoiceCode.Sharding.csproj" />
+		<ProjectReference Include="..\CustomDatabase2.SqliteCustomParts.Sharding\CustomDatabase2.SqliteCustomParts.Sharding.csproj" />
+		<ProjectReference Include="..\CustomDatabase2.WebApp.Sharding\CustomDatabase2.WebApp.Sharding.csproj" />
+		<ProjectReference Include="..\ExamplesCommonCode\ExamplesCommonCode.csproj" />
+	</ItemGroup>
+
+</Project>

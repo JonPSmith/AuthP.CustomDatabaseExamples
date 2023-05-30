@@ -1,0 +1,10 @@
+{
+  "ShardingDatabases": [
+    {
+      "Name": "Default Database",
+      "DatabaseName": null,
+      "ConnectionName": "DefaultConnection",
+      "DatabaseType": "Sqlite"
+    }
+  ]
+}

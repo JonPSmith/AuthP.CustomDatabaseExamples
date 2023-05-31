@@ -8,11 +8,11 @@ Before the 5.0.0 release of the AuthP library you only select the built-in SqlSe
 | ---------------------------------------- | ------------------ |
 | Microsoft.EntityFrameworkCore.SqlServer  | Built-in           |
 | Npgsql.EntityFrameworkCore.PostgreSQL    | Built-in			|
-| Microsoft.EntityFrameworkCore.Sqlite	   | See example in this repo |
+| Microsoft.EntityFrameworkCore.Sqlite	   | See examples in this repo |
 | Microsoft.EntityFrameworkCore.Cosmos 	   | 					|
-| Pomelo.EntityFrameworkCore.MySql 		   | [Pomelo Foundation Project](https://github.com/PomeloFoundation)					|
+| Pomelo.EntityFrameworkCore.MySql 		   | [Pomelo Foundation Project](https://github.com/PomeloFoundation) |
 | MySql.EntityFrameworkCore				   | [MySQL project](https://dev.mysql.com/)					|
-| Oracle.EntityFrameworkCore			   | [Oracle](https://www.oracle.com/database/technologies/appdev/dotnet.html)					|
+| Oracle.EntityFrameworkCore			   | [Oracle](https://www.oracle.com/database/technologies/appdev/dotnet.html) |
 
 
 For normal (non-sharding) applications you can use one type of database, but with [sharding / hybrid applications](https://github.com/JonPSmith/AuthPermissions.AspNetCore/wiki/Multi-tenant-explained#2-defining-the-three-multi-tenant-database-arrangements) you can use multiple database providers, e.g. SqlServer for the admin part and CosmosDB for the tenant databases.

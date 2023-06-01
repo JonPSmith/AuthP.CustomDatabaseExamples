@@ -19,11 +19,18 @@ For normal (non-sharding) applications you can use one type of database, but wit
 
 ## Examples in this repo
 
-At the moment there is one example which cover an normal (i.e. not sharding / hybrid) multi-tenant application using a custom database provider. I'm working on a example of using sharding multi-tenant application using a custom database provider, but at this time I have a bug and not enought time to work on it at this time.
+This repo contains two examples of using AuthP's "custom databases" feature. They are
+
+- CustomDatabase1 example, which for normal multi-tenant application
+- CustomDatabase2 example, which for sharding / hybrid multi-tenant application
+
+These examples are details below
 
 ### CustomDatabase1: normal multi-tenant application
 
-The first example is for an normal (i.e. not sharding / hybrid) multi-tenant application. This example has three projects, all starting with `CustomDatabase1.`. This uses the Sqlite database provider, mainly because the ASP.NET Core Individual User Accounts Authentication supports Sqlite too. There are three projects:
+**NOTE:** _Go to the article ["Using custom databases with the AuthP library – Part1: normal apps"](https://www.thereformedprogrammer.net/using-custom-databases-with-the-authp-library-part1-normal-apps/) for much more detail account of how use a custom database in an normal multi-tenant AuthP application._
+
+The first example is for an normal (i.e. not sharding / hybrid) multi-tenant application. This example has three projects, all starting with `CustomDatabase1.`. This uses the Sqlite database provider, mainly because the ASP.NET Core Individual User Accounts Authentication supports Sqlite too. The are three projects are listed below:
 
 | Projects                            | What they contain            |
 | ----------------------------------- | ----------------------------- |
@@ -35,5 +42,13 @@ _NOTE: Sqlite is different to other database providers as its connection string 
 
 ### CustomDatabase2: sharding multi-tenant application
 
-Coming soon.
+The second example is for sharding / hybrid multi-tenant application, which is more complex than CustomDatabase1. This example uses a sharding approach with each tenant having their own Sqlite database.  
+
+This example has three projects, all starting with `CustomDatabase2.`. This uses the Sqlite database provider, mainly because the ASP.NET Core Individual User Accounts Authentication supports Sqlite too. The are three projects are listed below:
+
+| Projects                            | What they contain            |
+| ----------------------------------- | ----------------------------- |
+| CustomDatabase2.InvoiceCode.Sharding         | The per-tenant code - an demo invoice app |
+| CustomDatabase2.SqliteCustomParts.Sharding  | The code to use Sqlite to AuthP |
+| CustomDatabase2.WebApp.Sharding  | The example WebApp to see how it works | 
 

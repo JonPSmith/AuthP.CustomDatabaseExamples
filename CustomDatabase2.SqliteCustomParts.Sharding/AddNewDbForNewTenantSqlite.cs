@@ -71,8 +71,7 @@ public class AddNewDbForNewTenantSqlite : IGetDatabaseForNewTenant
             DatabaseType = "Sqlite"
         };
 
-        //IMPORTANT: If you are using the json shardingsettings IAccessDatabaseInformationVer5 service,
-        //then the updated isn't available until the next HTTP request
+        //This adds a new DatabaseInformation to the shardingsettings
         if (status.CombineStatuses(_accessShardingInfo.AddDatabaseInfoToShardingInformation(databaseInfo))
             .HasErrors)
             return status;

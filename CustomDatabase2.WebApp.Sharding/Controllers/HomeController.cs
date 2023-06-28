@@ -2,12 +2,15 @@
 // Licensed under MIT license. See License.txt in the project root for license information.
 
 using System.Diagnostics;
+using AuthPermissions.AspNetCore.ShardingServices;
+using AuthPermissions.BaseCode.DataLayer.Classes;
 using AuthPermissions.SupportCode.AddUsersServices;
 using CustomDatabase2.InvoiceCode.Sharding.Services;
 using CustomDatabase2.WebApp.Sharding.Models;
 using CustomDatabase2.WebApp.Sharding.PermissionsCode;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Graph;
 
 namespace CustomDatabase2.WebApp.Sharding.Controllers
 {
@@ -33,7 +36,8 @@ namespace CustomDatabase2.WebApp.Sharding.Controllers
         public IActionResult CreateTenant()
         {
             if (User.Identity.IsAuthenticated)
-                return RedirectToAction("Index", new { message = "You can't create a new tenant because you are all ready logged in." });
+                return RedirectToAction("Index",
+                    new { message = "You can't create a new tenant because you are all ready logged in." });
 
             return View();
         }
@@ -54,6 +58,37 @@ namespace CustomDatabase2.WebApp.Sharding.Controllers
 
             return RedirectToAction(nameof(Index),
                 new { message = status.Message });
+        }
+
+        [AllowAnonymous]
+        public IActionResult CheckCreateNewShard(
+            [FromServices] IAccessDatabaseInformationVer5 accessShardingData,
+            [FromServices] IShardingConnections getShardingInfo)
+        {
+            //Create the sharding information or this new
+            var tenantRef = Guid.NewGuid().ToString();
+            var databaseInfo = new DatabaseInformation
+            {
+                Name = tenantRef,
+                ConnectionName = "DefaultConnection",
+                DatabaseName = tenantRef,
+                DatabaseType = "Sqlite"
+            };
+
+            //This adds a new DatabaseInformation to the shardingsettings
+            var status = accessShardingData.AddDatabaseInfoToShardingInformation(databaseInfo);
+            if (status.HasErrors)
+                return RedirectToAction(nameof(ErrorDisplay),
+                    new { errorMessage = status.GetAllErrors() });
+
+            var shardingNames = getShardingInfo.GetAllPossibleShardingData()
+                .Select(x => x.Name).ToList();
+            if (shardingNames.Contains(tenantRef))
+                return RedirectToAction(nameof(Index),
+                    new { message = "Success: the created sharding was found." });
+            
+            return RedirectToAction(nameof(ErrorDisplay),
+                new { errorMessage = $"ERROR: doesn't contain the expected sharding. Has {shardingNames.Count} shardings." });
         }
 
         public ActionResult ErrorDisplay(string errorMessage)

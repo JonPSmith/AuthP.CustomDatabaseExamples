@@ -60,7 +60,7 @@ public class ShardingTenantChangeService : ITenantChangeService
 
         //You need this fixes the the "database is locked" error
         //see https://stackoverflow.com/a/72575774/1434764
-        SqliteConnection.ClearAllPools();
+        //SqliteConnection.ClearAllPools();
 
         var newCompanyTenant = new CompanyTenant
         {
@@ -135,11 +135,7 @@ public class ShardingTenantChangeService : ITenantChangeService
     /// <returns></returns>
     public Task<string> MoveToDifferentDatabaseAsync(string oldDatabaseInfoName, string oldDataKey, Tenant updatedTenant)
     {
-        //This application only has sharding, so this 
-        //NOTE: Because this application uses Sqlite, then the normal move code wouldn't work
-        //That's because the normal move code has a transaction within another transaction, which Sqlite doesn't support
-        //If you want move with Sqlite, then read the article which has a solution to this.
-        // https://www.codeproject.com/Articles/1127310/Nested-Transactions-for-System-Data-SQLite-with-Sa
+        //This application only has sharding, so this method ia not implemented  
         throw new NotImplementedException("This application only handles one db per user, so no moving is needed.");
     }
 
@@ -173,17 +169,17 @@ public class ShardingTenantChangeService : ITenantChangeService
     /// This create a <see cref="ShardingSingleDbContext"/> with the correct connection string
     /// </summary>
     /// <param name="databaseDataName"></param>
-    /// <param name="addPooling">if true, then adds </param>
+    /// <param name="turnOffPooling">if true, then it adds "Pooling=FALSE" to the connection string</param>
     /// <returns><see cref="ShardingSingleDbContext"/> or null if connectionName wasn't found in the appsetting file</returns>
     private ShardingSingleDbContext? GetShardingSingleDbContext(string databaseDataName,
-        bool addPooling = true)
+        bool turnOffPooling = true)
     {
         var connectionString = _connections.FormConnectionString(databaseDataName);
         if (connectionString == null)
             throw new AuthPermissionsException(
                 "The provided database information didn't provide a valid connection string");
 
-        if (addPooling)
+        if (turnOffPooling)
             connectionString += "; Pooling=FALSE";
 
         var options = new DbContextOptionsBuilder<ShardingSingleDbContext>()

@@ -19,6 +19,7 @@ using CustomDatabase2.WebApp.Sharding.PermissionsCode;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using RunMethodsSequentially;
+using CustomDatabase2.ShardingDataInDb.ShardingDb;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -72,6 +73,9 @@ builder.Services.RegisterAuthPermissions<CustomDatabase2Permissions>(options =>
         options.RegisterServiceToRunInJob<StartupServiceMigrateAnyDbContext<ApplicationDbContext>>();
         //Add demo users to the database (if no individual account exist)
         options.RegisterServiceToRunInJob<StartupServicesIndividualAccountsAddDemoUsers>();
+
+        //Migrate the ShardingDataDbContext used for holding 
+        options.RegisterServiceToRunInJob<StartupServiceMigrateAnyDbContext<ShardingDataDbContext>>();
     });
 
 //This registers the AuthP's "Sign up for a new tenant, with versioning" feature

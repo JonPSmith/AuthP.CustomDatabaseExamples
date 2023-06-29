@@ -13,6 +13,7 @@ using AuthPermissions.BaseCode.DataLayer.Classes.SupportTypes;
 using AuthPermissions.BaseCode.DataLayer.EfCode;
 using AuthPermissions.BaseCode.SetupCode;
 using AuthPermissions.SetupCode;
+using CustomDatabase2.ShardingDataInDb;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -60,8 +61,9 @@ public static class SqliteSetupExtensions
         var shardingFileName = AuthPermissionsOptions.FormShardingSettingsFileName(setupData.Options.SecondPartOfShardingFile);
         setupData.Options.Configuration.AddJsonFile(shardingFileName, optional: true, reloadOnChange: true);
 
-        setupData.Services.AddScoped<IAccessDatabaseInformationVer5, AccessDatabaseInformationJsonFile>();
-        setupData.Services.AddTransient<IShardingConnections, ShardingConnectionsJsonFile>();
+        //CHANGE: I have to use a database to hold the sharding data because the IOptionsMonitor doesn't pick up a change immediately
+        setupData.Services.AddTransient<IAccessDatabaseInformationVer5, SetShardingDataViaDb>();
+        setupData.Services.AddTransient<IShardingConnections, GetShardingDataViaDb>();
         setupData.Services.AddTransient<ILinkToTenantDataService, LinkToTenantDataService>();
 
         switch (setupData.Options.LinkToTenantType)

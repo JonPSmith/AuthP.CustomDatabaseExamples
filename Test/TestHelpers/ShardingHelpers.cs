@@ -17,7 +17,9 @@ public static class ShardingHelpers
         {
             new SqliteSpecificMethods(
                 new AuthPermissionsOptions{ PathToFolderToLock = TestData.GetTestDataDir()},
-                new SqliteCombineDirAndDbName(TestData.GetTestDataDir()))
+                new SqliteCombineDirAndDbName(TestData.GetTestDataDir())),
+            new SqlServerDatabaseSpecificMethods(),
+            new PostgresDatabaseSpecificMethods(),
         };
     }
 }

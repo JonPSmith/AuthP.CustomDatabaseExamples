@@ -27,6 +27,7 @@
 		<ProjectReference Include="..\CustomDatabase1.SqliteCustomParts\CustomDatabase1.SqliteCustomParts.csproj" />
 		<ProjectReference Include="..\CustomDatabase1.WebApp\CustomDatabase1.WebApp.csproj" />
 		<ProjectReference Include="..\CustomDatabase2.InvoiceCode.Sharding\CustomDatabase2.InvoiceCode.Sharding.csproj" />
+		<ProjectReference Include="..\CustomDatabase2.ShardingDataInDb\CustomDatabase2.ShardingDataInDb.csproj" />
 		<ProjectReference Include="..\CustomDatabase2.SqliteCustomParts.Sharding\CustomDatabase2.SqliteCustomParts.Sharding.csproj" />
 		<ProjectReference Include="..\CustomDatabase2.WebApp.Sharding\CustomDatabase2.WebApp.Sharding.csproj" />
 		<ProjectReference Include="..\ExamplesCommonCode\ExamplesCommonCode.csproj" />

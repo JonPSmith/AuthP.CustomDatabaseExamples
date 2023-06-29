@@ -1,12 +1,12 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
-	<PropertyGroup>
-		<TargetFramework>net6.0</TargetFramework>
-		<ImplicitUsings>enable</ImplicitUsings>
-		<Nullable>enable</Nullable>
-	</PropertyGroup>
-
-	<ItemGroup>
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+	
+	    	<ItemGroup>
 		<PackageReference Include="AuthPermissions.AspNetCore" Version="5.0.0" />
 		<PackageReference Include="EntityFrameworkCore.Exceptions.Sqlite" Version="6.0.3" />
 		<PackageReference Include="Net.LocalizeMessagesAndErrors" Version="1.0.0" />
@@ -16,10 +16,14 @@
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-	</ItemGroup>
+	</ItemGroup>	
 
-	<ItemGroup>
-	  <ProjectReference Include="..\CustomDatabase2.ShardingDataInDb\CustomDatabase2.ShardingDataInDb.csproj" />
-	</ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="AuthPermissions.AspNetCore" Version="5.0.0" />
+  </ItemGroup>	
+
+  <ItemGroup>
+    <Folder Include="ShardingDb\Migrations\" />
+  </ItemGroup>
 
 </Project>

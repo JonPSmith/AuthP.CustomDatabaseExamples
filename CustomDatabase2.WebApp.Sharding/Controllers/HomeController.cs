@@ -10,6 +10,7 @@ using CustomDatabase2.WebApp.Sharding.Models;
 using CustomDatabase2.WebApp.Sharding.PermissionsCode;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using Microsoft.Graph;
 
 namespace CustomDatabase2.WebApp.Sharding.Controllers
@@ -63,7 +64,7 @@ namespace CustomDatabase2.WebApp.Sharding.Controllers
         [AllowAnonymous]
         public IActionResult CheckCreateNewShard(
             [FromServices] IAccessDatabaseInformationVer5 accessShardingData,
-            [FromServices] IShardingConnections getShardingInfo)
+            [FromServices] IOptionsMonitor<ShardingSettingsOption> monitor)
         {
             //Create the sharding information or this new
             var tenantRef = Guid.NewGuid().ToString();
@@ -75,20 +76,21 @@ namespace CustomDatabase2.WebApp.Sharding.Controllers
                 DatabaseType = "Sqlite"
             };
 
+            var before = monitor.CurrentValue.ShardingDatabases.ToList();
+
             //This adds a new DatabaseInformation to the shardingsettings
             var status = accessShardingData.AddDatabaseInfoToShardingInformation(databaseInfo);
             if (status.HasErrors)
                 return RedirectToAction(nameof(ErrorDisplay),
                     new { errorMessage = status.GetAllErrors() });
 
-            var shardingNames = getShardingInfo.GetAllPossibleShardingData()
-                .Select(x => x.Name).ToList();
-            if (shardingNames.Contains(tenantRef))
+            var after = monitor.CurrentValue.ShardingDatabases.ToList();
+            if (after.Count > before.Count)
                 return RedirectToAction(nameof(Index),
                     new { message = "Success: the created sharding was found." });
             
             return RedirectToAction(nameof(ErrorDisplay),
-                new { errorMessage = $"ERROR: doesn't contain the expected sharding. Has {shardingNames.Count} shardings." });
+                new { errorMessage = $"ERROR: Has {after.Count} shardings." });
         }
 
         public ActionResult ErrorDisplay(string errorMessage)

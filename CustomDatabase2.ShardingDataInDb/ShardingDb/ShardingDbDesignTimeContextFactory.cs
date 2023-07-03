@@ -9,14 +9,14 @@ namespace CustomDatabase2.ShardingDataInDb.ShardingDb
     public class ShardingDbDesignTimeContextFactory : IDesignTimeDbContextFactory<ShardingDataDbContext>          
     {
         // This connection links to an invalidate database, but that's OK as I only used the Add-Migration command
-        private const string connectionString = "Data source=shardingData.sqlite";
+        private const string connectionString = "host=127.0.0.1;Database=AuthP-Test";
 
         public ShardingDataDbContext CreateDbContext(string[] args)
         {
             var optionsBuilder =
                 new DbContextOptionsBuilder<ShardingDataDbContext>();
-            optionsBuilder.UseSqlite(connectionString, dbOptions =>
-                dbOptions.MigrationsHistoryTable("__ShardingDataMigration"));
+            optionsBuilder.UseNpgsql(connectionString, dbOptions =>
+                dbOptions.MigrationsHistoryTable("__ShardingDataDbMigration"));
 
             return new ShardingDataDbContext(optionsBuilder.Options, new ShardingDataDbContextOptions());
         }
@@ -30,7 +30,7 @@ namespace CustomDatabase2.ShardingDataInDb.ShardingDb
     * 
     * Add the following NuGet libraries to this project
     * 1. "Microsoft.EntityFrameworkCore.Tools"
-    * 2. "Microsoft.EntityFrameworkCore.Sqlite" (or another database provider)
+    * 2. "Npgsql.EntityFrameworkCore.PostgreSQL" (or another database provider)
     * 
     * 2. Using Package Manager Console commands
     * The steps are:

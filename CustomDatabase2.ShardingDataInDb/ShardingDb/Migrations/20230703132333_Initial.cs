@@ -12,10 +12,10 @@ namespace CustomDatabase2.ShardingDataInDb.ShardingDb.Migrations
                 name: "ShardingData",
                 columns: table => new
                 {
-                    Name = table.Column<string>(type: "TEXT", nullable: false),
-                    DatabaseName = table.Column<string>(type: "TEXT", nullable: true),
-                    ConnectionName = table.Column<string>(type: "TEXT", nullable: false),
-                    DatabaseType = table.Column<string>(type: "TEXT", nullable: false)
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    DatabaseName = table.Column<string>(type: "text", nullable: true),
+                    ConnectionName = table.Column<string>(type: "text", nullable: false),
+                    DatabaseType = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -25,7 +25,7 @@ namespace CustomDatabase2.ShardingDataInDb.ShardingDb.Migrations
             migrationBuilder.InsertData(
                 table: "ShardingData",
                 columns: new[] { "Name", "ConnectionName", "DatabaseName", "DatabaseType" },
-                values: new object[] { "Default Database", "DefaultConnection", null, "Sqlite" });
+                values: new object[] { "Default Database", "DefaultConnection", null, "PostgreSQL" });
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)

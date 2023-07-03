@@ -10,10 +10,10 @@ using AuthPermissions.BaseCode;
 using AuthPermissions.BaseCode.SetupCode;
 using AuthPermissions.SupportCode.AddUsersServices.Authentication;
 using AuthPermissions.SupportCode.AddUsersServices;
+using CustomDatabase2.CustomParts.Sharding;
 using CustomDatabase2.InvoiceCode.Sharding.AppStart;
 using CustomDatabase2.InvoiceCode.Sharding.EfCoreCode;
 using CustomDatabase2.InvoiceCode.Sharding.Services;
-using CustomDatabase2.SqliteCustomParts.Sharding;
 using CustomDatabase2.WebApp.Sharding.Data;
 using CustomDatabase2.WebApp.Sharding.PermissionsCode;
 using Microsoft.AspNetCore.Identity;
@@ -24,17 +24,16 @@ using CustomDatabase2.ShardingDataInDb.ShardingDb;
 var builder = WebApplication.CreateBuilder(args);
 
 #region change individual user accounts to Sqlite
-//Sqlite needs a extra service to add the directory where Sqlite should be created
-var combineDir = new SqliteCombineDirAndDbName(builder.Environment.WebRootPath);
-var connectionString =
-    combineDir.AddDirectoryToConnection(builder.Configuration.GetConnectionString("DefaultConnection"));
-//We need to register this as the sharding needs this to form correct Sqlite Tenant databases 
-builder.Services.AddSingleton(combineDir);
+//SqlServer is used for individual user accounts directly,
+//and indirectly (via GetShardingDataViaDb) to create each tenant database
+var sqlServerConnectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+//Postgres for AuthPermissionsContext and ShardingDataDbContext
+var postgresConnectionString = builder.Configuration.GetConnectionString("PostgreSqlConnection");
 
 //You need to create a migration for the individual user accounts DbContext
 //add-migration CreateIdentitySchema -Context ApplicationDbContext -OutputDir Data\Migrations
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite(connectionString));
+    options.UseSqlServer(sqlServerConnectionString));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 #endregion
@@ -58,7 +57,7 @@ builder.Services.RegisterAuthPermissions<CustomDatabase2Permissions>(options =>
     options.Configuration = builder.Configuration;
 })
     //NOTE: This uses the same database as the individual accounts DB
-    .SetupMultiTenantShardingWithSqlite(connectionString, combineDir, new SqliteDbConfig())
+    .SetupMultiTenantShardingWithSqlite(postgresConnectionString, sqlServerConnectionString)
     .IndividualAccountsAuthentication()
     .RegisterAddClaimToUser<AddTenantNameClaim>()
     .RegisterTenantChangeService<ShardingTenantChangeService>()
@@ -85,7 +84,7 @@ builder.Services.AddTransient<ISignInAndCreateTenant, SignInAndCreateTenant>();
 //If Sharding is turned on then include the following registration
 builder.Services.AddTransient<IGetDatabaseForNewTenant, AddNewDbForNewTenantSqlite>();
 
-builder.Services.RegisterInvoiceServicesSharding(connectionString);
+builder.Services.RegisterInvoiceServicesSharding(sqlServerConnectionString);
 
 var app = builder.Build();
 

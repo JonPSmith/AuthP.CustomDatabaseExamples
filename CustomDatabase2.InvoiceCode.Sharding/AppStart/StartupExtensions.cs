@@ -19,9 +19,9 @@ namespace CustomDatabase2.InvoiceCode.Sharding.AppStart
                 .Where(c => c.Name.EndsWith("Service"))  //optional
                 .AsPublicImplementedInterfaces();
 
-            //Register the retail database to the same database used for individual accounts and AuthP database
+            //Register the retail database to the same database used for
             services.AddDbContext<ShardingSingleDbContext>(options =>
-                options.UseSqlite(connectionString, dbOptions =>
+                options.UseSqlServer(connectionString, dbOptions =>
                 {
                     dbOptions.MigrationsHistoryTable(ShardingSingleDbContextHistoryName);
                     dbOptions.MigrationsAssembly("CustomDatabase2.InvoiceCode.Sharding");

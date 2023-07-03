@@ -1,7 +1,7 @@
 ﻿// Copyright (c) 2023 Jon P Smith, GitHub: JonPSmith, web: http://www.thereformedprogrammer.net/
 // Licensed under MIT license. See License.txt in the project root for license information.
 
-namespace CustomDatabase2.SqliteCustomParts.Sharding;
+namespace CustomDatabase2.CustomParts.Sharding.SqliteCode;
 
 public interface ISqliteCombineDirAndDbName
 {
@@ -16,6 +16,6 @@ public interface ISqliteCombineDirAndDbName
     /// NOTE: if not set then it uses ".sqlite" as the database extension.</param>
     /// <returns>A Sqlite connection string with the data source set to the directory and database filename.</returns>
     /// <exception cref="ArgumentNullException"></exception>
-    string AddDirectoryToConnection(string? baseConnectionString, 
+    string AddDirectoryToConnection(string? baseConnectionString,
         string? databaseName = null);
 }

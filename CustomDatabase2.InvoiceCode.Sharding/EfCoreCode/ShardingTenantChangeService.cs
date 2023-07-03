@@ -7,7 +7,6 @@ using AuthPermissions.AspNetCore.ShardingServices;
 using AuthPermissions.BaseCode.CommonCode;
 using AuthPermissions.BaseCode.DataLayer.Classes;
 using CustomDatabase2.InvoiceCode.Sharding.EfCoreClasses;
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -26,12 +25,6 @@ public class ShardingTenantChangeService : ITenantChangeService
 {
     private readonly IShardingConnections _connections;
     private readonly ILogger _logger;
-
-    /// <summary>
-    /// This allows the tenantId of the deleted tenant to be returned.
-    /// This is useful if you want to soft delete the data
-    /// </summary>
-    public int DeletedTenantId { get; private set; }
 
     public ShardingTenantChangeService(IShardingConnections connections, ILogger<ShardingTenantChangeService> logger)
     {
@@ -54,15 +47,9 @@ public class ShardingTenantChangeService : ITenantChangeService
         if (context == null)
             return $"There is no connection string with the name {tenant.DatabaseInfoName}.";
 
-        if (tenant.HasOwnDb && context.Companies.IgnoreQueryFilters().Any())
+        if (tenant.HasOwnDb && context.Companies.Any())
             return
                 $"The tenant's {nameof(Tenant.HasOwnDb)} property is true, but the database contains existing companies";
-
-        //You need this fixes the the "database is locked" error
-        //see https://stackoverflow.com/a/72575774/1434764
-        //SqliteConnection.ClearAllPools();
-
-        var connect = context.Database.GetConnectionString();//!!!!!!!!!!!!!!!!!!!!
 
         var newCompanyTenant = new CompanyTenant
         {
@@ -70,13 +57,7 @@ public class ShardingTenantChangeService : ITenantChangeService
             CompanyName = tenant.TenantFullName
         };
         context.Add(newCompanyTenant);
-        context.SaveChanges();
-
-        context.ChangeTracker.Clear();
-
-        var check = context.Companies.Single(); //!!!!!!!!!!!!!!!!!!!
-        if (check.CompanyName != tenant.TenantFullName)    //!!!!!!!!!!!!!!!!!!!
-            throw new Exception();                         //!!!!!!!!!!!!!!!!!!!
+        await context.SaveChangesAsync();
 
         return null;
     }
@@ -98,20 +79,40 @@ public class ShardingTenantChangeService : ITenantChangeService
         return null;
     }
 
+    /// <summary>
+    /// Typically you would delete the database, but that depends on what SQL Server provider you use.
+    /// In this case I simply remove the data in the database.
+    /// </summary>
+    /// <param name="tenant">The tenant data used to create this tenant</param>
+    /// <returns>Returns null if all OK, otherwise the create is rolled back and the return string is shown to the user</returns>
     public async Task<string> SingleTenantDeleteAsync(Tenant tenant)
     {
         using var context = GetShardingSingleDbContext(tenant.DatabaseInfoName);
         if (context == null)
             return $"There is no connection string with the name {tenant.DatabaseInfoName}.";
 
-        //You need this fixes the the "process cannot access the file XXX because it is being used by another process" error
-        //see https://github.com/dotnet/efcore/issues/26580#issuecomment-963938116
-        SqliteConnection.ClearAllPools();
+        await using var transaction = await context.Database.BeginTransactionAsync(IsolationLevel.Serializable);
+        try
+        {
+            var deleteSalesSql = $"DELETE FROM {nameof(ShardingSingleDbContext.LineItems)}";
+            await context.Database.ExecuteSqlRawAsync(deleteSalesSql);
+            var deleteStockSql = $"DELETE FROM {nameof(ShardingSingleDbContext.Invoices)}";
+            await context.Database.ExecuteSqlRawAsync(deleteStockSql);
 
-        var builder = new SqliteConnectionStringBuilder(context.Database.GetConnectionString());
-        var filePathToDb = builder.DataSource;
-        if (context.Database.GetService<IRelationalDatabaseCreator>().Exists())
-            File.Delete(filePathToDb);
+            var companyTenant = await context.Companies.SingleOrDefaultAsync();
+            if (companyTenant != null)
+            {
+                context.Remove(companyTenant);
+                await context.SaveChangesAsync();
+            }
+
+            await transaction.CommitAsync();
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, $"Failure when trying to delete the '{tenant.TenantFullName}' tenant.");
+            return "There was a system-level problem - see logs for more detail";
+        }
 
         return null;
     }
@@ -132,19 +133,11 @@ public class ShardingTenantChangeService : ITenantChangeService
     }
 
     /// <summary>
-    /// This method can be quite complicated. It has to
-    /// 1. Copy the data from the previous database into the new database
-    /// 2. Delete the old data
-    /// These two steps have to be done within a transaction, so that a failure to delete the old data will roll back the copy.
+    /// Because there is a database per tenant, then there is no need to move tenant data
     /// </summary>
-    /// <param name="oldDatabaseInfoName"></param>
-    /// <param name="oldDataKey"></param>
-    /// <param name="updatedTenant"></param>
-    /// <returns></returns>
     public Task<string> MoveToDifferentDatabaseAsync(string oldDatabaseInfoName, string oldDataKey, Tenant updatedTenant)
     {
-        //This application only has sharding, so this method ia not implemented  
-        throw new NotImplementedException("This application only handles one db per user, so no moving is needed.");
+        throw new NotImplementedException();
     }
 
     //--------------------------------------------------
@@ -157,25 +150,20 @@ public class ShardingTenantChangeService : ITenantChangeService
     /// </summary>
     /// <param name="tenant"></param>
     /// <returns></returns>
-    private async Task<string> CheckDatabaseAndPossibleMigrate(Tenant tenant)
+    private async Task<string?> CheckDatabaseAndPossibleMigrate(Tenant tenant)
     {
         using var context = GetShardingSingleDbContext(tenant.DatabaseInfoName);
         if (context == null)
             return $"There is no connection string with the name {tenant.DatabaseInfoName}.";
 
-        var connect = context.Database.GetConnectionString();//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-        //You need this fixes the the "database is locked" error
-        //see https://stackoverflow.com/a/72575774/1434764
-        //SqliteConnection.ClearAllPools();
-
-        //This finds if a Sqlite database exists
-        if (!context.Database.GetService<IRelationalDatabaseCreator>().Exists())
-            //await context.Database.EnsureCreatedAsync();
-            context.Database.Migrate();
-        else if (!await context.Database.GetService<IRelationalDatabaseCreator>().HasTablesAsync())
-            //The database exists but needs migrating
+        //Thanks to https://stackoverflow.com/questions/33911316/entity-framework-core-how-to-check-if-database-exists
+        //There are various options to detect if a database is there - this seems the clearest
+        if (!await context.Database.CanConnectAsync() ||
+            await context.Database.GetService<IRelationalDatabaseCreator>().HasTablesAsync())
+        {
+            //The database doesn't exist, or it hasn't been migrated
             await context.Database.MigrateAsync();
+        }
 
         return null;
     }
@@ -193,12 +181,13 @@ public class ShardingTenantChangeService : ITenantChangeService
                 "The provided database information didn't provide a valid connection string");
 
         var options = new DbContextOptionsBuilder<ShardingSingleDbContext>()
-            .UseSqlite(connectionString, dbOptions =>
-                {
-                    dbOptions.MigrationsHistoryTable("__ShardingInvoiceMigrationsHistoryTable");
-                    dbOptions.MigrationsAssembly("CustomDatabase2.InvoiceCode.Sharding");
-                }).Options;
+            .UseSqlServer(connectionString, dbOptions =>
+            {
+                dbOptions.MigrationsHistoryTable("__ShardingInvoiceMigrationsHistoryTable");
+                dbOptions.MigrationsAssembly("CustomDatabase2.InvoiceCode.Sharding");
+            }).Options;
 
         return new ShardingSingleDbContext(options);
     }
+
 }

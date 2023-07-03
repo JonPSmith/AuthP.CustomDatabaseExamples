@@ -3,14 +3,16 @@
 
 using System.IO;
 using System.Linq;
+
 using System.Threading.Tasks;
+using AuthPermissions.AspNetCore.ShardingServices;
 using AuthPermissions.BaseCode.DataLayer.Classes;
 using CustomDatabase2.InvoiceCode.Sharding.EfCoreClasses;
 using CustomDatabase2.InvoiceCode.Sharding.EfCoreCode;
 using LocalizeMessagesAndErrors.UnitTestingCode;
 using Microsoft.EntityFrameworkCore;
 using Test.StubClasses;
-using TestSupport.Helpers;
+using TestSupport.EfHelpers;
 using Xunit;
 using Xunit.Extensions.AssertExtensions;
 
@@ -18,57 +20,37 @@ namespace Test.UnitTests;
 
 public class TestShardingTenantChangeService
 {
-    [Fact]
-    public void TestSqliteShardingInvoiceDb_RealDatabase()
+    private readonly IShardingConnections _getConnectionsService = new StubConnectionsService();
+
+    private ShardingSingleDbContext GetShardingSingleDbContextFromTenant(Tenant tenant)
     {
-        //SETUP
-        var testDataPath = TestData.GetTestDataDir();
         var options = new DbContextOptionsBuilder<ShardingSingleDbContext>()
-            .UseSqlite($"Data Source={testDataPath}\\shardingInvoice.sqlite", dbOptions =>
-            {
-                dbOptions.MigrationsHistoryTable("__ShardingInvoiceMigrationsHistoryTable");
-                dbOptions.MigrationsAssembly("CustomDatabase2.InvoiceCode.Sharding");
-            }).Options;
-        var context = new ShardingSingleDbContext(options);
-        context.Database.EnsureDeleted();
-        context.ChangeTracker.Clear();
-
-        //ATTEMPT
-        context.Database.Migrate();
-        context.Add(new CompanyTenant { CompanyName = "Test" });
-        context.SaveChanges();
-
-        //VERIFY
-        context.Companies.Single().CompanyName.ShouldEqual("Test");
+            .UseSqlServer(_getConnectionsService.FormConnectionString(tenant.DatabaseInfoName))
+            .Options;
+        return new ShardingSingleDbContext(options);
     }
 
     [Fact]
     public async Task TestCreateNewTenantAsync()
     {
         //SETUP
-        var testDataPath = TestData.GetTestDataDir();
-        var options = new DbContextOptionsBuilder<ShardingSingleDbContext>()
-            .UseSqlite($"Data Source={testDataPath}\\CreateTenant.sqlite")
-            .Options;
-        var context = new ShardingSingleDbContext(options);
-        context.Database.EnsureDeleted();
-        context.ChangeTracker.Clear();
-
         var tenant = Tenant.CreateSingleTenant(
             "TestTenant", new StubDefaultLocalizer()).Result;
         tenant.UpdateShardingState("CreateTenant", true);
 
-        var stubCon = new StubConnectionsService();
-        var service = new ShardingTenantChangeService(stubCon, null);
+        var context = GetShardingSingleDbContextFromTenant(tenant);
+        context.Database.EnsureDeleted();
+
         context.ChangeTracker.Clear();
 
+        var service = new ShardingTenantChangeService(_getConnectionsService, null);
+
         //ATTEMPT
-        File.Exists($"{testDataPath}\\CreateTenant.sqlite").ShouldBeFalse();
         var error = await service.CreateNewTenantAsync(tenant);
 
         //VERIFY
         error.ShouldBeNull();
-        File.Exists($"{testDataPath}\\CreateTenant.sqlite").ShouldBeTrue();
+        (await context.Database.CanConnectAsync()).ShouldBeTrue();
         context.Companies.Single().CompanyName.ShouldEqual("TestTenant");
     }
 
@@ -76,28 +58,23 @@ public class TestShardingTenantChangeService
     public async Task TestSingleTenantDeleteAsync()
     {
         //SETUP
-        var testDataPath = TestData.GetTestDataDir();
-        var options = new DbContextOptionsBuilder<ShardingSingleDbContext>()
-            .UseSqlite($"Data Source={testDataPath}\\DeleteTenant.sqlite")
-            .Options;
-        var context = new ShardingSingleDbContext(options);
-        context.Database.EnsureDeleted();
-        context.Database.EnsureCreated();
-
         var tenant = Tenant.CreateSingleTenant(
             "TestTenant", new StubDefaultLocalizer()).Result;
         tenant.UpdateShardingState("DeleteTenant", true);
+        var context = GetShardingSingleDbContextFromTenant(tenant);
+        context.Database.EnsureCreated();
 
-        var stubCon = new StubConnectionsService();
-        var service = new ShardingTenantChangeService(stubCon, null);
         context.ChangeTracker.Clear();
 
+        var service = new ShardingTenantChangeService(_getConnectionsService, null);
+
         //ATTEMPT
-        File.Exists($"{testDataPath}\\DeleteTenant.sqlite").ShouldBeTrue();
         var error = await service.SingleTenantDeleteAsync(tenant);
 
         //VERIFY
         error.ShouldBeNull();
-        File.Exists($"{testDataPath}\\DeleteTenant.sqlite").ShouldBeFalse();
+        context.LineItems.Count().ShouldEqual(0);
+        context.Invoices.Count().ShouldEqual(0);
+        context.Companies.Count().ShouldEqual(0);
     }
 }

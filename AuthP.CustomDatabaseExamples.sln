@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CustomDatabase1.SqliteCusto
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CustomDatabase2.InvoiceCode.Sharding", "CustomDatabase2.InvoiceCode.Sharding\CustomDatabase2.InvoiceCode.Sharding.csproj", "{FF06FA75-FD72-48F4-AD47-2CDEC6C2CBC3}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CustomDatabase2.SqliteCustomParts.Sharding", "CustomDatabase2.SqliteCustomParts.Sharding\CustomDatabase2.SqliteCustomParts.Sharding.csproj", "{971444C8-7F1D-44E8-AF6E-D78941A71422}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CustomDatabase2.CustomParts.Sharding", "CustomDatabase2.SqliteCustomParts.Sharding\CustomDatabase2.CustomParts.Sharding.csproj", "{971444C8-7F1D-44E8-AF6E-D78941A71422}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ExamplesCommonCode", "ExamplesCommonCode\ExamplesCommonCode.csproj", "{661AC2D2-EB45-448A-9A34-2AA33CD594B2}"
 EndProject
@@ -25,7 +25,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		README.md = README.md
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CustomDatabase2.ShardingDataInDb", "CustomDatabase2.ShardingDataInDb\CustomDatabase2.ShardingDataInDb.csproj", "{3EC4E689-64F6-44C2-88CE-0F91760E338F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CustomDatabase2.ShardingDataInDb", "CustomDatabase2.ShardingDataInDb\CustomDatabase2.ShardingDataInDb.csproj", "{3EC4E689-64F6-44C2-88CE-0F91760E338F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

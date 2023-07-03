@@ -4,11 +4,8 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AuthPermissions.AspNetCore.ShardingServices;
-using AuthPermissions.BaseCode;
 using AuthPermissions.BaseCode.SetupCode;
-using CustomDatabase2.SqliteCustomParts.Sharding;
 using StatusGeneric;
-using TestSupport.Helpers;
 
 namespace Test.StubClasses;
 
@@ -31,15 +28,11 @@ public class StubConnectionsService : IShardingConnections
         _testConnectionReturnsError = testConnectionReturnsError;
         DatabaseProviderMethods = new Dictionary<AuthPDatabaseTypes, IDatabaseSpecificMethods>
         {
-            { AuthPDatabaseTypes.CustomDatabase, new SqliteSpecificMethods(
-                new AuthPermissionsOptions{ PathToFolderToLock = TestData.GetTestDataDir() }, 
-                new SqliteCombineDirAndDbName(TestData.GetTestDataDir())) },
+            { AuthPDatabaseTypes.SqlServer, new SqlServerDatabaseSpecificMethods() },
         };
         ShardingDatabaseProviders = new Dictionary<string, IDatabaseSpecificMethods>
         {
-            { "Sqlite", new SqliteSpecificMethods(
-                new AuthPermissionsOptions{ PathToFolderToLock = TestData.GetTestDataDir() },
-                new SqliteCombineDirAndDbName(TestData.GetTestDataDir())) }
+            { "SqlServer", new SqlServerDatabaseSpecificMethods()}
         };
     }
 
@@ -47,10 +40,10 @@ public class StubConnectionsService : IShardingConnections
     {
         return new List<DatabaseInformation>
         {
-            new DatabaseInformation{Name = "Default Database", ConnectionName = "UnitTestConnection", DatabaseType = "Sqlite"},
+            new DatabaseInformation{Name = "Default Database", ConnectionName = "UnitTestConnection", DatabaseType = "SqlServer"},
             new DatabaseInformation
             {
-                Name = "Another Database", ConnectionName = "DefaultConnection", DatabaseName = "StubTest", DatabaseType = "Sqlite"
+                Name = "Another Database", ConnectionName = "DefaultConnection", DatabaseName = "StubTest", DatabaseType = "SqlServer"
             }
         };
     }
@@ -69,21 +62,17 @@ public class StubConnectionsService : IShardingConnections
         return status;
     }
 
-    public string FormConnectionString(DatabaseInformation databaseInfo)
-    {
-        return $"Data Source={TestData.GetTestDataDir()}\\{databaseInfo.Name}.sqlite";
-    }
-
     public string FormConnectionString(string databaseInfoName)
     {
-        return $"Data Source={TestData.GetTestDataDir()}\\{databaseInfoName}.sqlite";
+        return $"Server=(localdb)\\mssqllocaldb;Database=CustomDatabase2_{databaseInfoName};Trusted_Connection=True;MultipleActiveResultSets=true";
     }
 
     public Task<List<(string databaseInfoName, bool? hasOwnDb, List<string> tenantNames)>> GetDatabaseInfoNamesWithTenantNamesAsync()
     {
         return Task.FromResult(new List<(string key, bool? hasOwnDb, List<string> tenantNames)>
         {
-            ("Default Database", false, new List<string>{ "Tenant1","Tenant3"})
+            ("Default Database", true, new List<string>{ "Tenant1","Tenant3"})
         });
     }
+
 }

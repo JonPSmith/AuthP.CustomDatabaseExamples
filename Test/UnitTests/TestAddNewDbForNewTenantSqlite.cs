@@ -4,7 +4,7 @@
 using System.Threading.Tasks;
 using AuthPermissions.BaseCode.DataLayer.Classes;
 using AuthPermissions.BaseCode.DataLayer.EfCode;
-using CustomDatabase2.SqliteCustomParts.Sharding;
+using CustomDatabase2.CustomParts.Sharding;
 using LocalizeMessagesAndErrors.UnitTestingCode;
 using Test.StubClasses;
 using TestSupport.EfHelpers;

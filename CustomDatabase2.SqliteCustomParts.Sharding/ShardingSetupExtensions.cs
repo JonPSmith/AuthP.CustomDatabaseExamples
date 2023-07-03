@@ -3,8 +3,8 @@
 
 using AuthPermissions;
 using AuthPermissions.AdminCode;
-using AuthPermissions.AspNetCore.AccessTenantData.Services;
 using AuthPermissions.AspNetCore.AccessTenantData;
+using AuthPermissions.AspNetCore.AccessTenantData.Services;
 using AuthPermissions.AspNetCore.GetDataKeyCode;
 using AuthPermissions.AspNetCore.ShardingServices;
 using AuthPermissions.BaseCode;
@@ -16,33 +16,29 @@ using AuthPermissions.SetupCode;
 using CustomDatabase2.ShardingDataInDb;
 using CustomDatabase2.ShardingDataInDb.ShardingDb;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using RunMethodsSequentially;
 
-namespace CustomDatabase2.SqliteCustomParts.Sharding;
+namespace CustomDatabase2.CustomParts.Sharding;
 
-public static class SqliteSetupExtensions
+public static class ShardingSetupExtensions
 {
     /// <summary>
-    /// This registers your custom database provider, in this case a Sqlite database.
+    /// This registers your custom database provider, in this case a PostgreSQL provider.
     /// This code will set the type of the database provider to <see cref="AuthPDatabaseTypes.CustomDatabase"/>
     /// and your code will register your database provider and also sets the RunMethodsSequentially code too.
     /// </summary>
     /// <param name="setupData"></param>
-    /// <param name="connectionString">The connection string to your Sqlite database</param>
-    /// <param name="combineDirAndDb">Implementation of the service to add the directory to a Sqlite connection string</param>
-    /// <param name="customConfiguration">Optional: This contains custom configuration code which is run
-    /// within the <see cref="DbContext.OnModelCreating"/></param> of the <see cref="AuthPermissionsDbContext"/>
+    /// <param name="postgresConnectionString">The connection string to your PostgreSQL database
+    /// within the <see cref="DbContext.OnModelCreating"/> of the <see cref="AuthPermissionsDbContext"/>
+    /// and the <see cref="ShardingDataDbContext"/></param>
     /// <returns></returns>
     /// <exception cref="AuthPermissionsException"></exception>
     /// <exception cref="AuthPermissionsBadDataException"></exception>
     public static AuthSetupData SetupMultiTenantShardingWithSqlite(this AuthSetupData setupData, 
-        string connectionString,
-        ISqliteCombineDirAndDbName combineDirAndDb,
-        ICustomConfiguration? customConfiguration = null)
+        string postgresConnectionString, string sqlServerConnectionString)
     {
-        connectionString.CheckConnectString();
+        postgresConnectionString.CheckConnectString();
 
         if (!setupData.Options.TenantType.IsMultiTenant())
             throw new AuthPermissionsException(
@@ -56,13 +52,8 @@ public static class SqliteSetupExtensions
 
         //This gets access to the ConnectionStrings
         setupData.Services.Configure<ConnectionStringsOption>(setupData.Options.Configuration.GetSection("ConnectionStrings"));
-        //This gets access to the ShardingData in the separate sharding settings file
-        setupData.Services.Configure<ShardingSettingsOption>(setupData.Options.Configuration);
-        //This adds the sharding settings file to the configuration
-        var shardingFileName = AuthPermissionsOptions.FormShardingSettingsFileName(setupData.Options.SecondPartOfShardingFile);
-        setupData.Options.Configuration.AddJsonFile(shardingFileName, optional: true, reloadOnChange: true);
-
         //CHANGE: I have to use a database to hold the sharding data because the IOptionsMonitor doesn't pick up a change immediately
+        //This removes the registering the ShardingSettingsOption and sharding settings json file 
         setupData.Services.AddTransient<IAccessDatabaseInformationVer5, SetShardingDataViaDb>();
         setupData.Services.AddTransient<IShardingConnections, GetShardingDataViaDb>();
         //This provides the information for the default 
@@ -70,10 +61,16 @@ public static class SqliteSetupExtensions
 
         //Register the ShardingDataDbContext used to hold the sharding information
         //NOTE: remember to add a RegisterServiceToRunInJob to migrate the database on startup 
-        setupData.Services.AddSqlite<ShardingDataDbContext>(connectionString, dbOptions =>
-            dbOptions.MigrationsHistoryTable("__ShardingDataMigration")
-            .MigrationsAssembly("CustomDatabase2.ShardingDataInDb")
-        );
+        setupData.Services.AddDbContext<ShardingDataDbContext>(
+            options =>
+            {
+                //This registers this to the  
+                options.UseNpgsql(postgresConnectionString, dbOptions =>
+                    dbOptions.MigrationsHistoryTable("__ShardingDataInDbHistory")
+                        .MigrationsAssembly("CustomDatabase2.ShardingDataInDb"));
+            });
+
+        
         setupData.Services.AddTransient<ILinkToTenantDataService, LinkToTenantDataService>();
 
         switch (setupData.Options.LinkToTenantType)
@@ -95,24 +92,19 @@ public static class SqliteSetupExtensions
         #region custom database parts
 
         setupData.Options.InternalData.AuthPDatabaseType = AuthPDatabaseTypes.CustomDatabase;
-        //Because we are using a custom database we register the sqlite specific methods
-        setupData.Services.AddScoped<IDatabaseSpecificMethods, SqliteSpecificMethods>();
-        //SqliteSpecificMethods needs a way to combine the directory and the database name
-        setupData.Services.AddSingleton(combineDirAndDb);
+        //Because we are using Postgres as a custom database we register the Postgres specific method
+        setupData.Services.AddScoped<IDatabaseSpecificMethods, PostgresDatabaseSpecificMethods>();
+        //And we need to register SqlServer as that is what the individual tenant databases use
+        setupData.Services.AddScoped<IDatabaseSpecificMethods, SqlServerDatabaseSpecificMethods>();
 
-        //This sets up AuthP's "Migration on startup" feature, which 
-        //This registered your custom configuration to run inside the AuthPermissionsDbContext
-        if (customConfiguration != null)
-            setupData.Services.AddSingleton(x => customConfiguration);
-
-        //We define the Sqlite 
+        //We define the Postgres AuthPermissionsDbContext 
         setupData.Services.AddDbContext<AuthPermissionsDbContext>(
             options =>
             {
                 //This registers the Sqlite 
-                options.UseSqlite(connectionString, dbOptions =>
+                options.UseNpgsql(postgresConnectionString, dbOptions =>
                     dbOptions.MigrationsHistoryTable(AuthDbConstants.MigrationsHistoryTableName)
-                        .MigrationsAssembly("CustomDatabase2.SqliteCustomParts.Sharding"));
+                        .MigrationsAssembly("AuthPermissions.PostgreSql"));
                 EntityFramework.Exceptions.Sqlite.ExceptionProcessorExtensions.UseExceptionProcessor(options);
             });
 
@@ -125,11 +117,10 @@ public static class SqliteSetupExtensions
                     if (string.IsNullOrEmpty(setupData.Options.PathToFolderToLock))
                         throw new AuthPermissionsBadDataException(
                             $"The {nameof(AuthPermissionsOptions.PathToFolderToLock)} property in the {nameof(AuthPermissionsOptions)} must be set to a " +
-                            "directory that all the instances of your application can access. ");
+                            "directory that all the instances of your application can access. " +
+                            "This is a backup to the Postgres lock in cases where the database doesn't exist yet.");
 
-                    //The https://github.com/madelson/DistributedLock doesn't support Sqlite for locking
-                    //so we just use the File lock
-                    //NOTE: DistributedLock does support many database types and its fairly easy to build a LockAndRun method
+                    options.AddSqlServerLockAndRunMethods(sqlServerConnectionString);
                     options.AddFileSystemLockAndRunMethods(setupData.Options.PathToFolderToLock);
                 }
                 else

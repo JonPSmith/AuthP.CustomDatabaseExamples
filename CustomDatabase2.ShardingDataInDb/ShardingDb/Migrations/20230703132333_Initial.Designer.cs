@@ -4,35 +4,40 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
 namespace CustomDatabase2.ShardingDataInDb.ShardingDb.Migrations
 {
     [DbContext(typeof(ShardingDataDbContext))]
-    [Migration("20230629103959_Initial")]
+    [Migration("20230703132333_Initial")]
     partial class Initial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "6.0.16");
+            modelBuilder
+                .HasAnnotation("ProductVersion", "6.0.16")
+                .HasAnnotation("Relational:MaxIdentifierLength", 63);
+
+            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("AuthPermissions.AspNetCore.ShardingServices.DatabaseInformation", b =>
                 {
                     b.Property<string>("Name")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<string>("ConnectionName")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<string>("DatabaseName")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<string>("DatabaseType")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.HasKey("Name");
 
@@ -43,7 +48,7 @@ namespace CustomDatabase2.ShardingDataInDb.ShardingDb.Migrations
                         {
                             Name = "Default Database",
                             ConnectionName = "DefaultConnection",
-                            DatabaseType = "Sqlite"
+                            DatabaseType = "PostgreSQL"
                         });
                 });
 #pragma warning restore 612, 618

@@ -9,7 +9,7 @@ using AuthPermissions.BaseCode.SetupCode;
 using LocalizeMessagesAndErrors;
 using StatusGeneric;
 
-namespace CustomDatabase2.SqliteCustomParts.Sharding;
+namespace CustomDatabase2.CustomParts.Sharding;
 
 public class AddNewDbForNewTenantSqlite : IGetDatabaseForNewTenant
 {

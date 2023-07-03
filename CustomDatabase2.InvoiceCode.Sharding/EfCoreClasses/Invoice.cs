@@ -2,7 +2,6 @@
 // Licensed under MIT license. See License.txt in the project root for license information.
 
 using System.ComponentModel.DataAnnotations;
-using AuthPermissions.BaseCode.CommonCode;
 
 namespace CustomDatabase2.InvoiceCode.Sharding.EfCoreClasses
 {

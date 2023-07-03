@@ -3,7 +3,7 @@
 
 using Microsoft.Data.Sqlite;
 
-namespace CustomDatabase2.SqliteCustomParts.Sharding;
+namespace CustomDatabase2.CustomParts.Sharding.SqliteCode;
 
 /// <summary>
 /// The Sqlite database is different from many other database providers that the database name
@@ -28,7 +28,7 @@ public class SqliteCombineDirAndDbName : ISqliteCombineDirAndDbName
     {
         _directoryForDbs = directoryForDbs ?? throw new ArgumentNullException(nameof(directoryForDbs));
         if (_directoryForDbs.EndsWith('\\'))
-            _directoryForDbs = _directoryForDbs.Substring(0, _directoryForDbs.Length -1);
+            _directoryForDbs = _directoryForDbs.Substring(0, _directoryForDbs.Length - 1);
         _dbExtension = dbExtension;
     }
 
@@ -43,7 +43,7 @@ public class SqliteCombineDirAndDbName : ISqliteCombineDirAndDbName
     /// NOTE: if not set then it uses ".sqlite" as the database extension.</param>
     /// <returns>A Sqlite connection string with the data source set to the directory and database filename.</returns>
     /// <exception cref="ArgumentNullException"></exception>
-    public string AddDirectoryToConnection(string? baseConnectionString, 
+    public string AddDirectoryToConnection(string? baseConnectionString,
         string? databaseName = null)
     {
         if (baseConnectionString == null)

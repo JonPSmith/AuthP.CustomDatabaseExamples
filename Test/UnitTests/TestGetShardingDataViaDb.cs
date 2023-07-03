@@ -42,8 +42,9 @@ public class TestGetShardingDataViaDb
 
     private IShardingConnections SetupGetShardingDataViaDb(AuthPermissionsDbContext? authContext = null)
     {
-        var options = SqliteInMemory.CreateOptions<ShardingDataDbContext>();
+        var options = this.CreateUniqueClassOptions<ShardingDataDbContext>();
         var shardingContext = new ShardingDataDbContext(options, new ShardingDataDbContextOptions());
+        shardingContext.Database.EnsureDeleted();
         shardingContext.Database.EnsureCreated();
 
         shardingContext.AddRange(
@@ -101,7 +102,8 @@ public class TestGetShardingDataViaDb
         var service = SetupGetShardingDataViaDb();
 
         //ATTEMPT
-        var databaseData = service.GetAllPossibleShardingData();
+        var databaseData = service.GetAllPossibleShardingData()
+            .OrderBy(x => x.Name).ToList();
 
         //VERIFY
         foreach (var data in databaseData)
@@ -109,9 +111,9 @@ public class TestGetShardingDataViaDb
             _output.WriteLine(data.ToString());
         }
         databaseData.Count.ShouldEqual(4);
-        databaseData[0].Name.ShouldEqual("Default Database");
-        databaseData[1].Name.ShouldEqual("Another");
-        databaseData[2].Name.ShouldEqual("Bad: No DatabaseName");
+        databaseData[0].Name.ShouldEqual("Another");
+        databaseData[1].Name.ShouldEqual("Bad: No DatabaseName");
+        databaseData[2].Name.ShouldEqual("Default Database");
         databaseData[3].Name.ShouldEqual("Special Postgres");
     }
 
@@ -122,7 +124,7 @@ public class TestGetShardingDataViaDb
         var service = SetupGetShardingDataViaDb();
 
         //ATTEMPT
-        var connectionStrings = service.GetConnectionStringNames().ToList();
+        var connectionStrings = service.GetConnectionStringNames().OrderBy(x => x).ToList();
 
         //VERIFY
         foreach (var data in connectionStrings)
@@ -130,10 +132,10 @@ public class TestGetShardingDataViaDb
             _output.WriteLine(data.ToString());
         }
         connectionStrings.Count.ShouldEqual(4);
-        connectionStrings[0].ShouldEqual("DefaultConnection");
-        connectionStrings[1].ShouldEqual("AnotherConnectionString");
-        connectionStrings[2].ShouldEqual("ServerOnlyConnectionString");
-        connectionStrings[3].ShouldEqual("PostgresConnection");
+        connectionStrings[0].ShouldEqual("AnotherConnectionString");
+        connectionStrings[1].ShouldEqual("DefaultConnection");
+        connectionStrings[2].ShouldEqual("PostgresConnection");
+        connectionStrings[3].ShouldEqual("ServerOnlyConnectionString");
     }
 
     [Theory]
@@ -150,7 +152,7 @@ public class TestGetShardingDataViaDb
             Name = "Test",
             DatabaseName = "TestDb",
             ConnectionName = connectionName,
-            DatabaseType = "Sqlite"
+            DatabaseType = "SqlServer"
         };
         var status = service.TestFormingConnectionString(databaseInfo);
 
@@ -195,7 +197,7 @@ public class TestGetShardingDataViaDb
         var connectionString = service.FormConnectionString("Default Database");
 
         //VERIFY
-        connectionString.ShouldEqual($"Data Source={TestData.GetTestDataDir()}\\PrimaryShardingDatabase.sqlite");
+        connectionString.ShouldEqual("Server=MyServer;Database=MainDb;");
     }
 
     [Fact]

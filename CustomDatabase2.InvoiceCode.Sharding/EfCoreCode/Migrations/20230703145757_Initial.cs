@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace CustomDatabase2.InvoiceCode.Sharding.EfCoreCode.Migrations
 {
-    public partial class Version5 : Migration
+    public partial class Initial : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -13,10 +13,10 @@ namespace CustomDatabase2.InvoiceCode.Sharding.EfCoreCode.Migrations
                 name: "Companies",
                 columns: table => new
                 {
-                    CompanyTenantId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    CompanyName = table.Column<string>(type: "TEXT", nullable: false),
-                    AuthPTenantId = table.Column<int>(type: "INTEGER", nullable: false)
+                    CompanyTenantId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    CompanyName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    AuthPTenantId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -27,10 +27,10 @@ namespace CustomDatabase2.InvoiceCode.Sharding.EfCoreCode.Migrations
                 name: "Invoices",
                 columns: table => new
                 {
-                    InvoiceId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    InvoiceName = table.Column<string>(type: "TEXT", nullable: false),
-                    DateCreated = table.Column<DateTime>(type: "TEXT", nullable: false)
+                    InvoiceId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    InvoiceName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    DateCreated = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -41,12 +41,12 @@ namespace CustomDatabase2.InvoiceCode.Sharding.EfCoreCode.Migrations
                 name: "LineItems",
                 columns: table => new
                 {
-                    LineItemId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    ItemName = table.Column<string>(type: "TEXT", nullable: false),
-                    NumberItems = table.Column<int>(type: "INTEGER", nullable: false),
-                    TotalPrice = table.Column<decimal>(type: "TEXT", nullable: false),
-                    InvoiceId = table.Column<int>(type: "INTEGER", nullable: false)
+                    LineItemId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ItemName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    NumberItems = table.Column<int>(type: "int", nullable: false),
+                    TotalPrice = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    InvoiceId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {

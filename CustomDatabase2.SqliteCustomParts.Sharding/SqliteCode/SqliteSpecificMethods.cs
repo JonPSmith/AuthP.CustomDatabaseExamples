@@ -10,7 +10,7 @@ using Medallion.Threading.FileSystem;
 using Microsoft.Data.Sqlite;
 using StatusGeneric;
 
-namespace CustomDatabase2.SqliteCustomParts.Sharding;
+namespace CustomDatabase2.CustomParts.Sharding.SqliteCode;
 
 /// <summary>
 /// This class implements the sharding methods for a Sqlite database.

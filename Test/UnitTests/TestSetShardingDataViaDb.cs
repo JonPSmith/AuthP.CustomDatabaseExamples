@@ -8,9 +8,6 @@ using CustomDatabase2.ShardingDataInDb.ShardingDb;
 using CustomDatabase2.ShardingDataInDb;
 using Test.StubClasses;
 using TestSupport.EfHelpers;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
-using TestSupport.Helpers;
 using Xunit;
 using Xunit.Abstractions;
 using Xunit.Extensions.AssertExtensions;
@@ -31,7 +28,7 @@ public class TestSetShardingDataViaDb
     private IAccessDatabaseInformationVer5 SetupSetShardingDataViaDb(bool addExtraEntries = true)
     {
         var options = SqliteInMemory.CreateOptions<ShardingDataDbContext>();
-        var shardingContext = new ShardingDataDbContext(options);
+        var shardingContext = new ShardingDataDbContext(options, new ShardingDataDbContextOptions());
         shardingContext.Database.EnsureCreated();
 
         if (addExtraEntries)
@@ -47,7 +44,7 @@ public class TestSetShardingDataViaDb
             shardingContext.ChangeTracker.Clear();
         }
 
-        return new SetShardingDataViaDb(shardingContext, new StubConnectionsService(), new StubAuthLocalizer().DefaultLocalizer);
+        return new SetShardingDataViaDb(shardingContext, new StubConnectionsService(), new StubAuthLocalizer());
     }
 
     [Fact]

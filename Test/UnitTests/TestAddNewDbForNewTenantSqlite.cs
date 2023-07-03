@@ -26,7 +26,7 @@ public class TestAddNewDbForNewTenantSqlite
 
         var accessShardingInfo = new StubAccessDatabaseInformationVer5();
         var tenantChangeService = new StubTenantChangeService();
-        var service = new AddNewDbForNewTenantSqlite(accessShardingInfo, 
+        var service = new AddNewDbForNewTenantSqlite(accessShardingInfo,
             context, tenantChangeService, new StubAuthLocalizer());
 
         var tenant = Tenant.CreateSingleTenant(
@@ -59,7 +59,7 @@ public class TestAddNewDbForNewTenantSqlite
 
         var accessShardingInfo = new StubAccessDatabaseInformationVer5();
         var tenantChangeService = new StubTenantChangeService();
-        var service = new AddNewDbForNewTenantSqlite(accessShardingInfo,
+        var service = new AddNewDbForNewTenantSqlite(accessShardingInfo, 
             context, tenantChangeService, new StubAuthLocalizer());
 
         var tenant = Tenant.CreateSingleTenant(

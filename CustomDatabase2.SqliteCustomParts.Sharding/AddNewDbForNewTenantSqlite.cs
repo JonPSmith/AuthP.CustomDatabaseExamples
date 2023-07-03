@@ -3,7 +3,6 @@
 
 using AuthPermissions.AdminCode;
 using AuthPermissions.AspNetCore.ShardingServices;
-using AuthPermissions.BaseCode;
 using AuthPermissions.BaseCode.DataLayer.Classes;
 using AuthPermissions.BaseCode.DataLayer.EfCode;
 using AuthPermissions.BaseCode.SetupCode;
@@ -27,7 +26,8 @@ public class AddNewDbForNewTenantSqlite : IGetDatabaseForNewTenant
     /// <param name="tenantChangeService"></param>
     /// <param name="localizeProvider"></param>
     public AddNewDbForNewTenantSqlite(
-        IAccessDatabaseInformationVer5 accessShardingInfo, AuthPermissionsDbContext context,
+        IAccessDatabaseInformationVer5 accessShardingInfo,
+        AuthPermissionsDbContext context,
         ITenantChangeService tenantChangeService, IAuthPDefaultLocalizer localizeProvider)
     {
         _accessShardingInfo = accessShardingInfo ?? throw new ArgumentNullException(nameof(accessShardingInfo));
@@ -81,7 +81,6 @@ public class AddNewDbForNewTenantSqlite : IGetDatabaseForNewTenant
         if (status.CombineStatuses(await _context.SaveChangesWithChecksAsync(_localizeDefault)).HasErrors)
             return status;
 
-        //Now we create the Sqlite database by migration, and then set it up
         var errorString = await _tenantChangeService.CreateNewTenantAsync(tenant);
         if (errorString != null)
             return status.AddErrorString(this.AlreadyLocalized(), errorString);
@@ -101,8 +100,8 @@ public class AddNewDbForNewTenantSqlite : IGetDatabaseForNewTenant
         if (_accessShardingInfo.GetDatabaseInformationByName(_tenantRef) != null)
         {
             //There is a entry for the tenant so we remove the sharding info and the delete the database 
-            await _accessShardingInfo.RemoveDatabaseInfoFromShardingInformationAsync(_tenantRef);
             await _tenantChangeService.SingleTenantDeleteAsync(_tenant);
+            await _accessShardingInfo.RemoveDatabaseInfoFromShardingInformationAsync(_tenantRef);
         }
 
         return status;

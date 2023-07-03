@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AuthPermissions.AspNetCore.ShardingServices;
+using AuthPermissions.BaseCode;
 using AuthPermissions.BaseCode.CommonCode;
 using AuthPermissions.BaseCode.DataLayer.EfCode;
 using CustomDatabase2.ShardingDataInDb;
@@ -42,7 +43,7 @@ public class TestGetShardingDataViaDb
     private IShardingConnections SetupGetShardingDataViaDb(AuthPermissionsDbContext? authContext = null)
     {
         var options = SqliteInMemory.CreateOptions<ShardingDataDbContext>();
-        var shardingContext = new ShardingDataDbContext(options);
+        var shardingContext = new ShardingDataDbContext(options, new ShardingDataDbContextOptions());
         shardingContext.Database.EnsureCreated();
 
         shardingContext.AddRange(
@@ -70,7 +71,8 @@ public class TestGetShardingDataViaDb
         shardingContext.SaveChanges();
 
         return new GetShardingDataViaDb(_connectSnapshot,
-            shardingContext, authContext, ShardingHelpers.GetDatabaseSpecificMethods(),
+            shardingContext, authContext, new AuthPermissionsOptions(),
+            ShardingHelpers.GetDatabaseSpecificMethods(),
             new StubAuthLocalizer());
     }
 
@@ -79,7 +81,7 @@ public class TestGetShardingDataViaDb
     {
         //SETUP
         var options = SqliteInMemory.CreateOptions<ShardingDataDbContext>();
-        var context = new ShardingDataDbContext(options);
+        var context = new ShardingDataDbContext(options, new ShardingDataDbContextOptions());
         context.Database.EnsureCreated();
 
         //ATTEMPT
@@ -111,6 +113,27 @@ public class TestGetShardingDataViaDb
         databaseData[1].Name.ShouldEqual("Another");
         databaseData[2].Name.ShouldEqual("Bad: No DatabaseName");
         databaseData[3].Name.ShouldEqual("Special Postgres");
+    }
+
+    [Fact]
+    public void TestGetConnectionStringNames()
+    {
+        //SETUP
+        var service = SetupGetShardingDataViaDb();
+
+        //ATTEMPT
+        var connectionStrings = service.GetConnectionStringNames().ToList();
+
+        //VERIFY
+        foreach (var data in connectionStrings)
+        {
+            _output.WriteLine(data.ToString());
+        }
+        connectionStrings.Count.ShouldEqual(4);
+        connectionStrings[0].ShouldEqual("DefaultConnection");
+        connectionStrings[1].ShouldEqual("AnotherConnectionString");
+        connectionStrings[2].ShouldEqual("ServerOnlyConnectionString");
+        connectionStrings[3].ShouldEqual("PostgresConnection");
     }
 
     [Theory]

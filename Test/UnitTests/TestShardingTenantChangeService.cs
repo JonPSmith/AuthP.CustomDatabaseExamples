@@ -31,6 +31,7 @@ public class TestShardingTenantChangeService
             }).Options;
         var context = new ShardingSingleDbContext(options);
         context.Database.EnsureDeleted();
+        context.ChangeTracker.Clear();
 
         //ATTEMPT
         context.Database.Migrate();
@@ -59,6 +60,7 @@ public class TestShardingTenantChangeService
 
         var stubCon = new StubConnectionsService();
         var service = new ShardingTenantChangeService(stubCon, null);
+        context.ChangeTracker.Clear();
 
         //ATTEMPT
         File.Exists($"{testDataPath}\\CreateTenant.sqlite").ShouldBeFalse();
@@ -88,6 +90,7 @@ public class TestShardingTenantChangeService
 
         var stubCon = new StubConnectionsService();
         var service = new ShardingTenantChangeService(stubCon, null);
+        context.ChangeTracker.Clear();
 
         //ATTEMPT
         File.Exists($"{testDataPath}\\DeleteTenant.sqlite").ShouldBeTrue();

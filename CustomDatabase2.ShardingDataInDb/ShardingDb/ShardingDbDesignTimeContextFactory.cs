@@ -18,7 +18,7 @@ namespace CustomDatabase2.ShardingDataInDb.ShardingDb
             optionsBuilder.UseSqlite(connectionString, dbOptions =>
                 dbOptions.MigrationsHistoryTable("__ShardingDataMigration"));
 
-            return new ShardingDataDbContext(optionsBuilder.Options);
+            return new ShardingDataDbContext(optionsBuilder.Options, new ShardingDataDbContextOptions());
         }
     }
     /******************************************************************************

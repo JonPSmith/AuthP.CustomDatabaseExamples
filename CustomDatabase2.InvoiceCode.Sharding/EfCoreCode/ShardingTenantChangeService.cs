@@ -1,9 +1,9 @@
 ﻿// Copyright (c) 2022 Jon P Smith, GitHub: JonPSmith, web: http://www.thereformedprogrammer.net/
 // Licensed under MIT license. See License.txt in the project root for license information.
 
+using System.Data;
 using AuthPermissions.AdminCode;
 using AuthPermissions.AspNetCore.ShardingServices;
-using AuthPermissions.BaseCode;
 using AuthPermissions.BaseCode.CommonCode;
 using AuthPermissions.BaseCode.DataLayer.Classes;
 using CustomDatabase2.InvoiceCode.Sharding.EfCoreClasses;
@@ -62,6 +62,8 @@ public class ShardingTenantChangeService : ITenantChangeService
         //see https://stackoverflow.com/a/72575774/1434764
         //SqliteConnection.ClearAllPools();
 
+        var connect = context.Database.GetConnectionString();//!!!!!!!!!!!!!!!!!!!!
+
         var newCompanyTenant = new CompanyTenant
         {
             AuthPTenantId = tenant.TenantId,
@@ -69,6 +71,12 @@ public class ShardingTenantChangeService : ITenantChangeService
         };
         context.Add(newCompanyTenant);
         context.SaveChanges();
+
+        context.ChangeTracker.Clear();
+
+        var check = context.Companies.Single(); //!!!!!!!!!!!!!!!!!!!
+        if (check.CompanyName != tenant.TenantFullName)    //!!!!!!!!!!!!!!!!!!!
+            throw new Exception();                         //!!!!!!!!!!!!!!!!!!!
 
         return null;
     }
@@ -155,9 +163,16 @@ public class ShardingTenantChangeService : ITenantChangeService
         if (context == null)
             return $"There is no connection string with the name {tenant.DatabaseInfoName}.";
 
+        var connect = context.Database.GetConnectionString();//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+        //You need this fixes the the "database is locked" error
+        //see https://stackoverflow.com/a/72575774/1434764
+        //SqliteConnection.ClearAllPools();
+
         //This finds if a Sqlite database exists
         if (!context.Database.GetService<IRelationalDatabaseCreator>().Exists())
-            await context.Database.MigrateAsync();
+            //await context.Database.EnsureCreatedAsync();
+            context.Database.Migrate();
         else if (!await context.Database.GetService<IRelationalDatabaseCreator>().HasTablesAsync())
             //The database exists but needs migrating
             await context.Database.MigrateAsync();
@@ -169,18 +184,13 @@ public class ShardingTenantChangeService : ITenantChangeService
     /// This create a <see cref="ShardingSingleDbContext"/> with the correct connection string
     /// </summary>
     /// <param name="databaseDataName"></param>
-    /// <param name="turnOffPooling">if true, then it adds "Pooling=FALSE" to the connection string</param>
     /// <returns><see cref="ShardingSingleDbContext"/> or null if connectionName wasn't found in the appsetting file</returns>
-    private ShardingSingleDbContext? GetShardingSingleDbContext(string databaseDataName,
-        bool turnOffPooling = true)
+    private ShardingSingleDbContext? GetShardingSingleDbContext(string databaseDataName)
     {
         var connectionString = _connections.FormConnectionString(databaseDataName);
         if (connectionString == null)
             throw new AuthPermissionsException(
                 "The provided database information didn't provide a valid connection string");
-
-        if (turnOffPooling)
-            connectionString += "; Pooling=FALSE";
 
         var options = new DbContextOptionsBuilder<ShardingSingleDbContext>()
             .UseSqlite(connectionString, dbOptions =>

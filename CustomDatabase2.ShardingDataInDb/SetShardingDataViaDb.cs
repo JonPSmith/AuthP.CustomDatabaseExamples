@@ -2,9 +2,9 @@
 // Licensed under MIT license. See License.txt in the project root for license information.
 
 using AuthPermissions.AspNetCore.ShardingServices;
+using AuthPermissions.BaseCode.SetupCode;
 using CustomDatabase2.ShardingDataInDb.ShardingDb;
 using LocalizeMessagesAndErrors;
-using Microsoft.EntityFrameworkCore;
 using StatusGeneric;
 
 namespace CustomDatabase2.ShardingDataInDb;
@@ -17,11 +17,11 @@ public class SetShardingDataViaDb : IAccessDatabaseInformationVer5
 
     public SetShardingDataViaDb(ShardingDataDbContext shardingContext, 
         IShardingConnections connectionsService,
-        IDefaultLocalizer localizeDefault)
+        IAuthPDefaultLocalizer localizeProvider)
     {
         _shardingContext = shardingContext;
         _connectionsService = connectionsService;
-        _localizeDefault = localizeDefault;
+        _localizeDefault = localizeProvider.DefaultLocalizer;
     }
 
     /// <summary>

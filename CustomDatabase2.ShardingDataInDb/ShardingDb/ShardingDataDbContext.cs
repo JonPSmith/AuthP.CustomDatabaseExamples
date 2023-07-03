@@ -10,12 +10,16 @@ namespace CustomDatabase2.ShardingDataInDb.ShardingDb
     public class ShardingDataDbContext : DbContext
     {
         /// <summary>
-        /// This defines the name of the connection string for the main database
+        /// This holds the settings for the default <see cref="DatabaseInformation"/> entry
         /// </summary>
-        public string ShardingDefaultDatabaseInfoName { get; } = "Default Database";
+        private readonly ShardingDataDbContextOptions _options;
 
-        public ShardingDataDbContext(DbContextOptions<ShardingDataDbContext> options)
-            : base(options) {}
+        public ShardingDataDbContext(DbContextOptions<ShardingDataDbContext> options, 
+            ShardingDataDbContextOptions options1)
+            : base(options)
+        {
+            _options = options1;
+        }
 
         public DbSet<DatabaseInformation> ShardingData { get; set; }
 
@@ -35,9 +39,9 @@ namespace CustomDatabase2.ShardingDataInDb.ShardingDb
             modelBuilder.Entity<DatabaseInformation>().HasData(
                 new DatabaseInformation
                 {
-                    Name = ShardingDefaultDatabaseInfoName,
+                    Name = _options.DefaultDatabaseInfoName,
                     DatabaseName = null,
-                    ConnectionName = "DefaultConnection",
+                    ConnectionName = _options.DefaultDatabaseInfoConnectionName,
                     DatabaseType = this.GetProviderShortName()
                 });
         }

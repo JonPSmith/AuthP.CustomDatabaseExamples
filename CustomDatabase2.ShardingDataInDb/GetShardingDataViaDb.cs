@@ -2,6 +2,7 @@
 // Licensed under MIT license. See License.txt in the project root for license information.
 
 using AuthPermissions.AspNetCore.ShardingServices;
+using AuthPermissions.BaseCode;
 using AuthPermissions.BaseCode.CommonCode;
 using AuthPermissions.BaseCode.DataLayer.EfCode;
 using AuthPermissions.BaseCode.SetupCode;
@@ -18,12 +19,14 @@ public class GetShardingDataViaDb : IShardingConnections
     private readonly ConnectionStringsOption _connectionDict;
     private readonly ShardingDataDbContext _shardingContext;
     private readonly AuthPermissionsDbContext _authDbContext;
+    private readonly AuthPermissionsOptions _options;
     private readonly IDefaultLocalizer _localizeDefault;
 
     /// <summary>Initializes a new instance of the <see cref="T:System.Object" /> class.</summary>
     public GetShardingDataViaDb(IOptionsSnapshot<ConnectionStringsOption> connectionsAccessor, 
         ShardingDataDbContext shardingContext,
         AuthPermissionsDbContext authDbContext,
+        AuthPermissionsOptions options,
         IEnumerable<IDatabaseSpecificMethods> databaseProviderMethods,
         IAuthPDefaultLocalizer localizeProvider)
     {
@@ -31,6 +34,7 @@ public class GetShardingDataViaDb : IShardingConnections
         _connectionDict = connectionsAccessor.Value;
         _shardingContext = shardingContext;
         _authDbContext = authDbContext;
+        _options = options;
         DatabaseProviderMethods = databaseProviderMethods.ToDictionary(x => x.AuthPDatabaseType);
         ShardingDatabaseProviders = DatabaseProviderMethods.Values.ToDictionary(x => x.DatabaseProviderShortName);
         _localizeDefault = localizeProvider.DefaultLocalizer;
@@ -62,7 +66,7 @@ public class GetShardingDataViaDb : IShardingConnections
     /// <returns></returns>
     public IEnumerable<string> GetConnectionStringNames()
     {
-        return _shardingContext.ShardingData.Select(x => x.Name);
+        return _shardingContext.ShardingData.Select(x => x.ConnectionName);
     }
 
     /// <summary>
@@ -86,12 +90,12 @@ public class GetShardingDataViaDb : IShardingConnections
         {
             result.Add(grouped.ContainsKey(databaseInfoName)
                 ? (databaseInfoName,
-                    databaseInfoName == _shardingContext.ShardingDefaultDatabaseInfoName
+                    databaseInfoName == _options.ShardingDefaultDatabaseInfoName
                         ? false //The default DatabaseInfoName contains the AuthP information, so its a shared database
                         : grouped[databaseInfoName].FirstOrDefault()?.HasOwnDb,
                     grouped[databaseInfoName].Select(x => x.TenantFullName).ToList())
                 : (databaseInfoName,
-                    databaseInfoName == _shardingContext.ShardingDefaultDatabaseInfoName ? false : null,
+                    databaseInfoName == _options.ShardingDefaultDatabaseInfoName ? false : null,
                     new List<string>()));
         }
 
@@ -111,7 +115,7 @@ public class GetShardingDataViaDb : IShardingConnections
         var databaseData = _shardingContext.ShardingData.SingleOrDefault(x => x.Name == databaseInfoName);
         if (databaseData == null)
             throw new AuthPermissionsException(
-                $"The database information with the name of '{databaseInfoName}' wasn't founds.");
+                $"The database information with the name of '{databaseInfoName}' wasn't found.");
 
         if (!_connectionDict.TryGetValue(databaseData.ConnectionName, out var connectionString))
             throw new AuthPermissionsException(

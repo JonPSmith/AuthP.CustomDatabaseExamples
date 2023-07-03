@@ -14,6 +14,7 @@ using AuthPermissions.BaseCode.DataLayer.EfCode;
 using AuthPermissions.BaseCode.SetupCode;
 using AuthPermissions.SetupCode;
 using CustomDatabase2.ShardingDataInDb;
+using CustomDatabase2.ShardingDataInDb.ShardingDb;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -64,6 +65,15 @@ public static class SqliteSetupExtensions
         //CHANGE: I have to use a database to hold the sharding data because the IOptionsMonitor doesn't pick up a change immediately
         setupData.Services.AddTransient<IAccessDatabaseInformationVer5, SetShardingDataViaDb>();
         setupData.Services.AddTransient<IShardingConnections, GetShardingDataViaDb>();
+        //This provides the information for the default 
+        setupData.Services.AddSingleton(new ShardingDataDbContextOptions());
+
+        //Register the ShardingDataDbContext used to hold the sharding information
+        //NOTE: remember to add a RegisterServiceToRunInJob to migrate the database on startup 
+        setupData.Services.AddSqlite<ShardingDataDbContext>(connectionString, dbOptions =>
+            dbOptions.MigrationsHistoryTable("__ShardingDataMigration")
+            .MigrationsAssembly("CustomDatabase2.ShardingDataInDb")
+        );
         setupData.Services.AddTransient<ILinkToTenantDataService, LinkToTenantDataService>();
 
         switch (setupData.Options.LinkToTenantType)

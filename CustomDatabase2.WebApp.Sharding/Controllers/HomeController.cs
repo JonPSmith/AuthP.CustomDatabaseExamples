@@ -3,7 +3,6 @@
 
 using System.Diagnostics;
 using AuthPermissions.AspNetCore.ShardingServices;
-using AuthPermissions.BaseCode.DataLayer.Classes;
 using AuthPermissions.SupportCode.AddUsersServices;
 using CustomDatabase2.InvoiceCode.Sharding.Services;
 using CustomDatabase2.WebApp.Sharding.Models;
@@ -11,7 +10,6 @@ using CustomDatabase2.WebApp.Sharding.PermissionsCode;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using Microsoft.Graph;
 
 namespace CustomDatabase2.WebApp.Sharding.Controllers
 {
@@ -63,8 +61,8 @@ namespace CustomDatabase2.WebApp.Sharding.Controllers
 
         [AllowAnonymous]
         public IActionResult CheckCreateNewShard(
-            [FromServices] IAccessDatabaseInformationVer5 accessShardingData,
-            [FromServices] IOptionsMonitor<ShardingSettingsOption> monitor)
+            [FromServices] IAccessDatabaseInformationVer5 setSharding,
+            [FromServices] IShardingConnections getSharding)
         {
             //Create the sharding information or this new
             var tenantRef = Guid.NewGuid().ToString();
@@ -76,15 +74,15 @@ namespace CustomDatabase2.WebApp.Sharding.Controllers
                 DatabaseType = "Sqlite"
             };
 
-            var before = monitor.CurrentValue.ShardingDatabases.ToList();
+            var before = getSharding.GetAllPossibleShardingData().ToList();
 
             //This adds a new DatabaseInformation to the shardingsettings
-            var status = accessShardingData.AddDatabaseInfoToShardingInformation(databaseInfo);
+            var status = setSharding.AddDatabaseInfoToShardingInformation(databaseInfo);
             if (status.HasErrors)
                 return RedirectToAction(nameof(ErrorDisplay),
                     new { errorMessage = status.GetAllErrors() });
 
-            var after = monitor.CurrentValue.ShardingDatabases.ToList();
+            var after = getSharding.GetAllPossibleShardingData().ToList();
             if (after.Count > before.Count)
                 return RedirectToAction(nameof(Index),
                     new { message = "Success: the created sharding was found." });

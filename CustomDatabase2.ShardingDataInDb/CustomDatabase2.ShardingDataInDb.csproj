@@ -19,7 +19,7 @@
 	</ItemGroup>	
 
   <ItemGroup>
-    <PackageReference Include="AuthPermissions.AspNetCore" Version="5.0.0" />
+    <PackageReference Include="AuthPermissions.AspNetCore" Version="5.0.1-preview001" />
   </ItemGroup>	
 
   <ItemGroup>

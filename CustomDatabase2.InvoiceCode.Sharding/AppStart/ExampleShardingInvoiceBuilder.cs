@@ -7,10 +7,8 @@ namespace CustomDatabase2.InvoiceCode.Sharding.AppStart
 {
     public enum ExampleInvoiceTypes { Computer = 0, Office = 1, Travel = 2 }
 
-    public class ExampleInvoiceBuilder
+    public class ExampleShardingInvoiceBuilder
     {
-        private readonly string _dataKey;
-
         private readonly Random _random = new Random();
 
         private readonly Dictionary<ExampleInvoiceTypes, string[]> LineItemsDict = new Dictionary<ExampleInvoiceTypes, string[]>()
@@ -19,11 +17,6 @@ namespace CustomDatabase2.InvoiceCode.Sharding.AppStart
             { ExampleInvoiceTypes.Office, new [] {"Desk", "Chair", "Filing cabinet", "Waste bin" } },
             { ExampleInvoiceTypes.Travel, new [] { "Taxi", "Flight", "Hotel", "Taxi", "Lunch", "Flight", "Taxi" } },
         };
-
-        public ExampleInvoiceBuilder(string dataKey)
-        {
-            _dataKey = dataKey;
-        }
 
         public Invoice CreateRandomInvoice(string companyName, string invoiceName = null)
         {

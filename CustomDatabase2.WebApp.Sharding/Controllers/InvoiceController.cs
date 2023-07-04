@@ -44,7 +44,7 @@ namespace CustomDatabase2.WebApp.Sharding.Controllers
         [HasPermission(CustomDatabase2Permissions.InvoiceCreate)]
         public async Task<IActionResult> CreateInvoice(Invoice invoice)
         {
-            var builder = new ExampleInvoiceBuilder(null);
+            var builder = new ExampleShardingInvoiceBuilder();
             var newInvoice = builder.CreateRandomInvoice(AddTenantNameClaim.GetTenantNameFromUser(User), invoice.InvoiceName);
             _context.Add(newInvoice);
             await _context.SaveChangesAsync();

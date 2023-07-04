@@ -91,8 +91,7 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    //You need to turn this off, otherwise you get a migrate popup
-    //app.UseMigrationsEndPoint();
+    app.UseMigrationsEndPoint();
 }
 else
 {

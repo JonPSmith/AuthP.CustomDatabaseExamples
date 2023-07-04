@@ -13,6 +13,7 @@ using LocalizeMessagesAndErrors.UnitTestingCode;
 using Microsoft.EntityFrameworkCore;
 using Test.StubClasses;
 using TestSupport.EfHelpers;
+using TestSupport.Helpers;
 using Xunit;
 using Xunit.Extensions.AssertExtensions;
 
@@ -24,10 +25,9 @@ public class TestShardingTenantChangeService
 
     private ShardingSingleDbContext GetShardingSingleDbContextFromTenant(Tenant tenant)
     {
-        var options = new DbContextOptionsBuilder<ShardingSingleDbContext>()
-            .UseSqlServer(_getConnectionsService.FormConnectionString(tenant.DatabaseInfoName))
-            .Options;
-        return new ShardingSingleDbContext(options);
+        var connectionString = _getConnectionsService.FormConnectionString(tenant.DatabaseInfoName);
+        var options = this.CreateUniqueClassOptions<ShardingSingleDbContext>();
+        return new ShardingSingleDbContext(options, new ManualAddConnectionStringToDb(connectionString));
     }
 
     [Fact]

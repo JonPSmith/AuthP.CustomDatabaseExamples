@@ -3,6 +3,7 @@
 
 using System.Data;
 using AuthPermissions.AdminCode;
+using AuthPermissions.AspNetCore.GetDataKeyCode;
 using AuthPermissions.AspNetCore.ShardingServices;
 using AuthPermissions.BaseCode.CommonCode;
 using AuthPermissions.BaseCode.DataLayer.Classes;
@@ -187,7 +188,7 @@ public class ShardingTenantChangeService : ITenantChangeService
                 dbOptions.MigrationsAssembly("CustomDatabase2.InvoiceCode.Sharding");
             }).Options;
 
-        return new ShardingSingleDbContext(options);
+        var shardingData = new ManualAddConnectionStringToDb(connectionString);
+        return new ShardingSingleDbContext(options, shardingData);
     }
-
 }

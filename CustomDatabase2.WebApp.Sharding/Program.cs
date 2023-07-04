@@ -82,7 +82,7 @@ builder.Services.RegisterAuthPermissions<CustomDatabase2Permissions>(options =>
 builder.Services.AddTransient<IAddNewUserManager, IndividualUserAddUserManager<IdentityUser>>();
 builder.Services.AddTransient<ISignInAndCreateTenant, SignInAndCreateTenant>();
 //If Sharding is turned on then include the following registration
-builder.Services.AddTransient<IGetDatabaseForNewTenant, AddNewDbForNewTenantSqlite>();
+builder.Services.AddTransient<IGetDatabaseForNewTenant, AddNewDbForNewTenantSqlServer>();
 
 builder.Services.RegisterInvoiceServicesSharding(sqlServerConnectionString);
 
@@ -91,12 +91,13 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.UseMigrationsEndPoint();
+    //You need to turn this off, otherwise you get a migrate popup
+    //app.UseMigrationsEndPoint();
 }
 else
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+    //The default HSTS value is 30 days.You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 

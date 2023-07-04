@@ -11,10 +11,11 @@ namespace CustomDatabase2.WebApp.Sharding.Models
         public string MultiTenant { get; } = "Custom database, with sharding";
         public string[] Databases { get; } = new []
         {
-            "One Sqlite database containing: Individual accounts database, AuthP",
-            "Tenant databases are created via the 'Sign up now!' feature"
+            "Individual accounts database (SqlServer)",
+            "AuthPermissionsDbContext and ShardingDataDbContext (Postgres)",
+            "Each Tenant database (SqlServer)"
         };
 
-        public string Note { get; } = "Sharding with multiple databases";
+        public string Note { get; } = "Each Tenant has its own database, e.g. sharding";
     }
 }

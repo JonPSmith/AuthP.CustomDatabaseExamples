@@ -13,7 +13,7 @@ using Xunit.Extensions.AssertExtensions;
 
 namespace Test.UnitTests;
 
-public class TestAddNewDbForNewTenantSqlite
+public class TestAddNewDbForNewTenantSqlServer
 {
     [Fact]
     public async Task TestFindOrCreateDatabaseAsync()
@@ -26,7 +26,7 @@ public class TestAddNewDbForNewTenantSqlite
 
         var accessShardingInfo = new StubAccessDatabaseInformationVer5();
         var tenantChangeService = new StubTenantChangeService();
-        var service = new AddNewDbForNewTenantSqlite(accessShardingInfo,
+        var service = new AddNewDbForNewTenantSqlServer(accessShardingInfo,
             context, tenantChangeService, new StubAuthLocalizer());
 
         var tenant = Tenant.CreateSingleTenant(
@@ -43,7 +43,7 @@ public class TestAddNewDbForNewTenantSqlite
         accessShardingInfo.DatabaseInfoFromCode.Name.ShouldEqual("Tenant_1");
         accessShardingInfo.DatabaseInfoFromCode.ConnectionName.ShouldEqual("DefaultConnection");
         accessShardingInfo.DatabaseInfoFromCode.DatabaseName.ShouldEqual("Tenant_1");
-        accessShardingInfo.DatabaseInfoFromCode.DatabaseType.ShouldEqual("Sqlite");
+        accessShardingInfo.DatabaseInfoFromCode.DatabaseType.ShouldEqual("SqlServer");
         tenantChangeService.CalledMethodName.ShouldEqual("CreateNewTenantAsync");
         tenantChangeService.TenantParameter.TenantFullName.ShouldEqual("MyTenant");
     }
@@ -59,7 +59,7 @@ public class TestAddNewDbForNewTenantSqlite
 
         var accessShardingInfo = new StubAccessDatabaseInformationVer5();
         var tenantChangeService = new StubTenantChangeService();
-        var service = new AddNewDbForNewTenantSqlite(accessShardingInfo, 
+        var service = new AddNewDbForNewTenantSqlServer(accessShardingInfo, 
             context, tenantChangeService, new StubAuthLocalizer());
 
         var tenant = Tenant.CreateSingleTenant(

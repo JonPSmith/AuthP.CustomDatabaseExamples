@@ -20,7 +20,7 @@ namespace CustomDatabase2.InvoiceCode.Sharding.EfCoreCode
             optionsBuilder.UseSqlServer(connectionString, dbOptions =>
                 dbOptions.MigrationsHistoryTable(StartupExtensions.ShardingSingleDbContextHistoryName));
 
-            return new ShardingSingleDbContext(optionsBuilder.Options);
+            return new ShardingSingleDbContext(optionsBuilder.Options, new ManualAddConnectionStringToDb(connectionString));
         }
     }
     /******************************************************************************

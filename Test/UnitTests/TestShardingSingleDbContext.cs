@@ -2,6 +2,7 @@
 // Licensed under MIT license. See License.txt in the project root for license information.
 
 using System.Linq;
+using AuthPermissions.AspNetCore.GetDataKeyCode;
 using CustomDatabase2.InvoiceCode.Sharding.EfCoreClasses;
 using CustomDatabase2.InvoiceCode.Sharding.EfCoreCode;
 using Microsoft.EntityFrameworkCore;
@@ -19,14 +20,14 @@ public class TestShardingSingleDbContext
     public void TestShardingInvoiceDb()
     {
         //SETUP
-
+        var testConnectionString = this.GetUniqueDatabaseConnectionString();
         var options = new DbContextOptionsBuilder<ShardingSingleDbContext>()
             .UseSqlServer(this.GetUniqueDatabaseConnectionString(), dbOptions =>
             {
                 dbOptions.MigrationsHistoryTable("__ShardingInvoiceMigrationsHistoryTable");
                 dbOptions.MigrationsAssembly("CustomDatabase2.InvoiceCode.Sharding");
             }).Options;
-        var context = new ShardingSingleDbContext(options);
+        var context = new ShardingSingleDbContext(options, new ManualAddConnectionStringToDb(testConnectionString));
         context.Database.EnsureDeleted();
 
         //ATTEMPT

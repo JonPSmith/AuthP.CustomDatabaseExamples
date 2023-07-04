@@ -11,7 +11,7 @@ using StatusGeneric;
 
 namespace CustomDatabase2.CustomParts.Sharding;
 
-public class AddNewDbForNewTenantSqlite : IGetDatabaseForNewTenant
+public class AddNewDbForNewTenantSqlServer : IGetDatabaseForNewTenant
 {
     private readonly IAccessDatabaseInformationVer5 _accessShardingInfo;
     private readonly AuthPermissionsDbContext _context;
@@ -25,7 +25,7 @@ public class AddNewDbForNewTenantSqlite : IGetDatabaseForNewTenant
     /// <param name="context"></param>
     /// <param name="tenantChangeService"></param>
     /// <param name="localizeProvider"></param>
-    public AddNewDbForNewTenantSqlite(
+    public AddNewDbForNewTenantSqlServer(
         IAccessDatabaseInformationVer5 accessShardingInfo,
         AuthPermissionsDbContext context,
         ITenantChangeService tenantChangeService, IAuthPDefaultLocalizer localizeProvider)
@@ -40,7 +40,7 @@ public class AddNewDbForNewTenantSqlite : IGetDatabaseForNewTenant
     private string? _tenantRef;
 
     /// <summary>
-    /// This implementation creates a new Sqlite database for each tenant. The steps are:
+    /// This implementation creates a new SqlServer database for each tenant. The steps are:
     /// 1. Create the <see cref="DatabaseInformation"/> and store it in the shardingsettings
     /// 2. Its adds the sharding information to the tenant, and saves it.
     /// 3. Then it create the database for this tenant
@@ -68,7 +68,7 @@ public class AddNewDbForNewTenantSqlite : IGetDatabaseForNewTenant
             Name = _tenantRef,
             ConnectionName = "DefaultConnection",
             DatabaseName = _tenantRef,
-            DatabaseType = "Sqlite"
+            DatabaseType = "SqlServer"
         };
 
         //This adds a new DatabaseInformation to the shardingsettings

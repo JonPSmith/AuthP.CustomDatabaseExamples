@@ -48,6 +48,7 @@ builder.Services.AddControllersWithViews()
 builder.Services.AddControllersWithViews()
     .AddRazorRuntimeCompilation();
 
+
 builder.Services.RegisterAuthPermissions<CustomDatabase2Permissions>(options =>
 {
     options.TenantType = TenantTypes.SingleLevel;
@@ -57,7 +58,7 @@ builder.Services.RegisterAuthPermissions<CustomDatabase2Permissions>(options =>
     options.Configuration = builder.Configuration;
 })
     //NOTE: This uses the same database as the individual accounts DB
-    .SetupMultiTenantShardingWithSqlite(postgresConnectionString, sqlServerConnectionString)
+    .SetupMultiTenantShardingCustomDb(postgresConnectionString, sqlServerConnectionString, new DatabaseInformationOptions(false))
     .IndividualAccountsAuthentication()
     .RegisterAddClaimToUser<AddTenantNameClaim>()
     .RegisterTenantChangeService<ShardingTenantChangeService>()

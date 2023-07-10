@@ -1,6 +1,9 @@
 ﻿// Copyright (c) 2021 Jon P Smith, GitHub: JonPSmith, web: http://www.thereformedprogrammer.net/
 // Licensed under MIT license. See License.txt in the project root for license information.
 
+using AuthPermissions.AspNetCore.ShardingServices;
+using AuthPermissions.BaseCode;
+using AuthPermissions.BaseCode.SetupCode;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 
@@ -18,7 +21,8 @@ namespace CustomDatabase2.ShardingDataInDb.ShardingDb
             optionsBuilder.UseNpgsql(connectionString, dbOptions =>
                 dbOptions.MigrationsHistoryTable("__ShardingDataDbMigration"));
 
-            return new ShardingDataDbContext(optionsBuilder.Options, new ShardingDataDbContextOptions());
+
+            return new ShardingDataDbContext(optionsBuilder.Options, new DatabaseInformationOptions(false));
         }
     }
     /******************************************************************************

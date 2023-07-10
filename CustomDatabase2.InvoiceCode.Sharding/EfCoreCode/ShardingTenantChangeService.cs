@@ -82,7 +82,7 @@ public class ShardingTenantChangeService : ITenantChangeService
 
     /// <summary>
     /// Typically you would delete the database, but that depends on what SQL Server provider you use.
-    /// In this case I simply remove the data in the database.
+    /// In this case I can the database because it is on a local SqlServer server.
     /// </summary>
     /// <param name="tenant">The tenant data used to create this tenant</param>
     /// <returns>Returns null if all OK, otherwise the create is rolled back and the return string is shown to the user</returns>
@@ -92,28 +92,7 @@ public class ShardingTenantChangeService : ITenantChangeService
         if (context == null)
             return $"There is no connection string with the name {tenant.DatabaseInfoName}.";
 
-        await using var transaction = await context.Database.BeginTransactionAsync(IsolationLevel.Serializable);
-        try
-        {
-            var deleteSalesSql = $"DELETE FROM {nameof(ShardingSingleDbContext.LineItems)}";
-            await context.Database.ExecuteSqlRawAsync(deleteSalesSql);
-            var deleteStockSql = $"DELETE FROM {nameof(ShardingSingleDbContext.Invoices)}";
-            await context.Database.ExecuteSqlRawAsync(deleteStockSql);
-
-            var companyTenant = await context.Companies.SingleOrDefaultAsync();
-            if (companyTenant != null)
-            {
-                context.Remove(companyTenant);
-                await context.SaveChangesAsync();
-            }
-
-            await transaction.CommitAsync();
-        }
-        catch (Exception e)
-        {
-            _logger.LogError(e, $"Failure when trying to delete the '{tenant.TenantFullName}' tenant.");
-            return "There was a system-level problem - see logs for more detail";
-        }
+        await context.Database.EnsureDeletedAsync();
 
         return null;
     }

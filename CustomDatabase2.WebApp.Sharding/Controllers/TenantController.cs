@@ -47,7 +47,8 @@ namespace CustomDatabase2.WebApp.Sharding.Controllers
         [FromServices]IShardingConnections connect)
         {
             return View(ShardingSingleLevelTenantDto.SetupForCreate(authOptions,
-                connect.GetAllPossibleShardingData().Select(x => x.Name).ToList()
+                //Only use the Default Database
+                new List<string>{"Default Database"}
                 ));
         }
 
@@ -57,7 +58,8 @@ namespace CustomDatabase2.WebApp.Sharding.Controllers
         public async Task<IActionResult> Create(ShardingSingleLevelTenantDto input)
         {
             var status = await _authTenantAdmin.AddSingleTenantAsync(input.TenantName, null,
-                input.HasOwnDb, input.ConnectionName);
+                //The hasOwnDb is true because this app only has sharding tenants
+                true, input.ConnectionName);
 
             return status.HasErrors
                 ? RedirectToAction(nameof(ErrorDisplay),

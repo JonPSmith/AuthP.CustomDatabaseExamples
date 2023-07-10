@@ -11,7 +11,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CustomDatabase2.ShardingDataInDb.ShardingDb.Migrations
 {
     [DbContext(typeof(ShardingDataDbContext))]
-    [Migration("20230703132333_Initial")]
+    [Migration("20230710060426_Initial")]
     partial class Initial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -42,14 +42,6 @@ namespace CustomDatabase2.ShardingDataInDb.ShardingDb.Migrations
                     b.HasKey("Name");
 
                     b.ToTable("ShardingData");
-
-                    b.HasData(
-                        new
-                        {
-                            Name = "Default Database",
-                            ConnectionName = "DefaultConnection",
-                            DatabaseType = "PostgreSQL"
-                        });
                 });
 #pragma warning restore 612, 618
         }

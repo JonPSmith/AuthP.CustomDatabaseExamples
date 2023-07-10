@@ -21,11 +21,6 @@ namespace CustomDatabase2.ShardingDataInDb.ShardingDb.Migrations
                 {
                     table.PrimaryKey("PK_ShardingData", x => x.Name);
                 });
-
-            migrationBuilder.InsertData(
-                table: "ShardingData",
-                columns: new[] { "Name", "ConnectionName", "DatabaseName", "DatabaseType" },
-                values: new object[] { "Default Database", "DefaultConnection", null, "PostgreSQL" });
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)

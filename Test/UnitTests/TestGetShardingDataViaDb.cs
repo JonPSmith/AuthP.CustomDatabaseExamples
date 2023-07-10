@@ -43,7 +43,7 @@ public class TestGetShardingDataViaDb
     private IShardingConnections SetupGetShardingDataViaDb(AuthPermissionsDbContext? authContext = null)
     {
         var options = this.CreateUniqueClassOptions<ShardingDataDbContext>();
-        var shardingContext = new ShardingDataDbContext(options, new ShardingDataDbContextOptions());
+        var shardingContext = new ShardingDataDbContext(options, new DatabaseInformationOptions(false));
         shardingContext.Database.EnsureDeleted();
         shardingContext.Database.EnsureCreated();
 
@@ -77,23 +77,6 @@ public class TestGetShardingDataViaDb
             new StubAuthLocalizer());
     }
 
-    [Fact]
-    public void TestDefaultShardingDatabaseData()
-    {
-        //SETUP
-        var options = SqliteInMemory.CreateOptions<ShardingDataDbContext>();
-        var context = new ShardingDataDbContext(options, new ShardingDataDbContextOptions());
-        context.Database.EnsureCreated();
-
-        //ATTEMPT
-        var databaseDefault = context.ShardingData.Single();
-
-        //VERIFY
-        databaseDefault.Name.ShouldEqual("Default Database");
-        databaseDefault.DatabaseName.ShouldBeNull();
-        databaseDefault.ConnectionName.ShouldEqual("DefaultConnection");
-        databaseDefault.DatabaseType.ShouldEqual("Sqlite");
-    }
 
     [Fact]
     public void TestGetAllConnectionStrings()
@@ -110,11 +93,10 @@ public class TestGetShardingDataViaDb
         {
             _output.WriteLine(data.ToString());
         }
-        databaseData.Count.ShouldEqual(4);
+        databaseData.Count.ShouldEqual(3);
         databaseData[0].Name.ShouldEqual("Another");
         databaseData[1].Name.ShouldEqual("Bad: No DatabaseName");
-        databaseData[2].Name.ShouldEqual("Default Database");
-        databaseData[3].Name.ShouldEqual("Special Postgres");
+        databaseData[2].Name.ShouldEqual("Special Postgres");
     }
 
     [Fact]
@@ -131,11 +113,10 @@ public class TestGetShardingDataViaDb
         {
             _output.WriteLine(data.ToString());
         }
-        connectionStrings.Count.ShouldEqual(4);
+        connectionStrings.Count.ShouldEqual(3);
         connectionStrings[0].ShouldEqual("AnotherConnectionString");
-        connectionStrings[1].ShouldEqual("DefaultConnection");
-        connectionStrings[2].ShouldEqual("PostgresConnection");
-        connectionStrings[3].ShouldEqual("ServerOnlyConnectionString");
+        connectionStrings[1].ShouldEqual("PostgresConnection");
+        connectionStrings[2].ShouldEqual("ServerOnlyConnectionString");
     }
 
     [Theory]
@@ -188,19 +169,6 @@ public class TestGetShardingDataViaDb
     }
 
     [Fact]
-    public void TestGetNamedConnectionStringDefaultDatabase()
-    {
-        //SETUP
-        var service = SetupGetShardingDataViaDb();
-
-        //ATTEMPT
-        var connectionString = service.FormConnectionString("Default Database");
-
-        //VERIFY
-        connectionString.ShouldEqual("Server=MyServer;Database=MainDb;");
-    }
-
-    [Fact]
     public void TestGetNamedConnectionStringPostgres()
     {
         //SETUP
@@ -222,12 +190,8 @@ public class TestGetShardingDataViaDb
         context.Database.EnsureCreated();
 
         var tenant1 = AuthPSetupHelpers.CreateTestSingleTenantOk("Tenant1");
-        tenant1.UpdateShardingState("Default Database", false);
-        var tenant2 = AuthPSetupHelpers.CreateTestSingleTenantOk("Tenant3");
-        tenant2.UpdateShardingState("Default Database", false);
-        var tenant3 = AuthPSetupHelpers.CreateTestSingleTenantOk("Tenant2");
-        tenant3.UpdateShardingState("Another", false);
-        context.AddRange(tenant1, tenant2, tenant3);
+        tenant1.UpdateShardingState("Another", false);
+        context.Add(tenant1);
         context.SaveChanges();
 
         context.ChangeTracker.Clear();
@@ -240,9 +204,8 @@ public class TestGetShardingDataViaDb
         //VERIFY
         keyPairs.ShouldEqual(new List<(string databaseName, bool? hasOwnDb, List<string> tenantNames)>
         {
-            ("Another", false, new List<string>{ "Tenant2"}),
+            ("Another", false, new List<string>{ "Tenant1"}),
             ("Bad: No DatabaseName", null, new List<string>()),
-            ("Default Database", false, new List<string>{"Tenant1", "Tenant3"}),
             ("Special Postgres", null, new List<string>())
         });
     }
@@ -288,7 +251,6 @@ public class TestGetShardingDataViaDb
         {
             ("Another", false, new List<string>{ "Tenant2"}),
             ("Bad: No DatabaseName", null, new List<string>()),
-            ("Default Database", false, addTenantDefaultDatabase ? new List<string>{ "Tenant1"} : new List<string>()),
             ("Special Postgres", null, new List<string>())
         });
     }

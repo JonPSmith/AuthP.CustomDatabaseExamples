@@ -11,7 +11,6 @@ using TestSupport.EfHelpers;
 using Xunit;
 using Xunit.Abstractions;
 using Xunit.Extensions.AssertExtensions;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace Test.UnitTests;
@@ -28,7 +27,7 @@ public class TestSetShardingDataViaDb
     private IAccessDatabaseInformationVer5 SetupSetShardingDataViaDb(bool addExtraEntries = true)
     {
         var options = SqliteInMemory.CreateOptions<ShardingDataDbContext>();
-        var shardingContext = new ShardingDataDbContext(options, new ShardingDataDbContextOptions());
+        var shardingContext = new ShardingDataDbContext(options, new DatabaseInformationOptions(false));
         shardingContext.Database.EnsureCreated();
 
         if (addExtraEntries)
@@ -61,8 +60,7 @@ public class TestSetShardingDataViaDb
         {
             _output.WriteLine(databaseInformation.ToString());
         }
-        databaseInfo.Count.ShouldEqual(1);
-        databaseInfo.Single().ToString().ShouldEqual("Name: Default Database, DatabaseName:  < null > , ConnectionName: DefaultConnection, DatabaseType: Sqlite");
+        databaseInfo.Count.ShouldEqual(0);
     }
 
     [Fact]
@@ -79,17 +77,15 @@ public class TestSetShardingDataViaDb
         {
             _output.WriteLine(databaseInformation.ToString());
         }
-        databaseInfo.Count.ShouldEqual(3);
-        databaseInfo[0].ToString().ShouldEqual("Name: Default Database, DatabaseName:  < null > , ConnectionName: DefaultConnection, DatabaseType: Sqlite");
-        databaseInfo[1].ToString().ShouldEqual("Name: Other Database, DatabaseName: MyDatabase1, ConnectionName: UnitTestConnection, DatabaseType: SqlServer");
-        databaseInfo[2].ToString().ShouldEqual("Name: PostgreSql1, DatabaseName: StubTest, ConnectionName: PostgreSqlConnection, DatabaseType: PostgreSQL");
+        databaseInfo.Count.ShouldEqual(2);
+        databaseInfo[0].ToString().ShouldEqual("Name: Other Database, DatabaseName: MyDatabase1, ConnectionName: UnitTestConnection, DatabaseType: SqlServer");
+        databaseInfo[1].ToString().ShouldEqual("Name: PostgreSql1, DatabaseName: StubTest, ConnectionName: PostgreSqlConnection, DatabaseType: PostgreSQL");
     }
 
     [Theory]
     [InlineData("New Name", true)]
     [InlineData(null, false)]
     [InlineData("   ", false)]
-    [InlineData("Default Database", false)]
     public void TestAddDatabaseInfoToJsonFile_TestName(string name, bool isValid)
     {
         //SETUP
@@ -107,7 +103,7 @@ public class TestSetShardingDataViaDb
         //VERIFY
         _output.WriteLine(status.IsValid ? status.Message : status.GetAllErrors());
         status.IsValid.ShouldEqual(isValid);
-        service.ReadAllShardingInformation().Count.ShouldEqual(status.IsValid ? 4 : 3);
+        service.ReadAllShardingInformation().Count.ShouldEqual(status.IsValid ? 3 : 2);
     }
 
     [Theory]
@@ -130,7 +126,7 @@ public class TestSetShardingDataViaDb
         //VERIFY
         _output.WriteLine(status.IsValid ? status.Message : status.GetAllErrors());
         status.IsValid.ShouldEqual(isValid);
-        service.ReadAllShardingInformation().Count.ShouldEqual(status.IsValid ? 4 : 3);
+        service.ReadAllShardingInformation().Count.ShouldEqual(status.IsValid ? 3 : 2);
     }
 
     [Theory]
@@ -171,7 +167,7 @@ public class TestSetShardingDataViaDb
         //VERIFY
         _output.WriteLine(status.IsValid ? status.Message : status.GetAllErrors());
         status.IsValid.ShouldEqual(isValid);
-        service.ReadAllShardingInformation().Count.ShouldEqual(status.IsValid ? 2 : 3);
+        service.ReadAllShardingInformation().Count.ShouldEqual(status.IsValid ? 1 : 2);
     }
 
 

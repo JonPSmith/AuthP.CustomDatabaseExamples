@@ -40,14 +40,6 @@ namespace CustomDatabase2.ShardingDataInDb.ShardingDb.Migrations
                     b.HasKey("Name");
 
                     b.ToTable("ShardingData");
-
-                    b.HasData(
-                        new
-                        {
-                            Name = "Default Database",
-                            ConnectionName = "DefaultConnection",
-                            DatabaseType = "PostgreSQL"
-                        });
                 });
 #pragma warning restore 612, 618
         }

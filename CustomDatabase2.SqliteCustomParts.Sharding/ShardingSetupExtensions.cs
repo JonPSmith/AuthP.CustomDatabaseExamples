@@ -32,11 +32,14 @@ public static class ShardingSetupExtensions
     /// <param name="postgresConnectionString">The connection string to your PostgreSQL database
     /// within the <see cref="DbContext.OnModelCreating"/> of the <see cref="AuthPermissionsDbContext"/>
     /// and the <see cref="ShardingDataDbContext"/></param>
+    /// <param name="sqlServerConnectionString"></param>
+    /// <param name="defaultDatabaseInformation">Optional: you can override the default <see cref="DatabaseInformation"/> data if required.</param>
     /// <returns></returns>
     /// <exception cref="AuthPermissionsException"></exception>
     /// <exception cref="AuthPermissionsBadDataException"></exception>
-    public static AuthSetupData SetupMultiTenantShardingWithSqlite(this AuthSetupData setupData, 
-        string postgresConnectionString, string sqlServerConnectionString)
+    public static AuthSetupData SetupMultiTenantShardingCustomDb(this AuthSetupData setupData, 
+        string postgresConnectionString, string sqlServerConnectionString, 
+        DatabaseInformationOptions? defaultDatabaseInformation = null)
     {
         postgresConnectionString.CheckConnectString();
 
@@ -50,6 +53,11 @@ public static class ShardingSetupExtensions
             throw new AuthPermissionsException(
                 $"You must set the {nameof(AuthPermissionsOptions.Configuration)} to the ASP.NET Core Configuration when using Sharding");
 
+        //This defines the default sharding entry to use when there are no entries
+        defaultDatabaseInformation ??= new DatabaseInformationOptions();
+        defaultDatabaseInformation.FormDefaultDatabaseInfo(setupData.Options);
+        setupData.Services.AddSingleton(defaultDatabaseInformation);
+
         //This gets access to the ConnectionStrings
         setupData.Services.Configure<ConnectionStringsOption>(setupData.Options.Configuration.GetSection("ConnectionStrings"));
         //CHANGE: I have to use a database to hold the sharding data because the IOptionsMonitor doesn't pick up a change immediately
@@ -57,7 +65,7 @@ public static class ShardingSetupExtensions
         setupData.Services.AddTransient<IAccessDatabaseInformationVer5, SetShardingDataViaDb>();
         setupData.Services.AddTransient<IShardingConnections, GetShardingDataViaDb>();
         //This provides the information for the default 
-        setupData.Services.AddSingleton(new ShardingDataDbContextOptions());
+        setupData.Services.AddSingleton(new DatabaseInformationOptions());
 
         //Register the ShardingDataDbContext used to hold the sharding information
         //NOTE: remember to add a RegisterServiceToRunInJob to migrate the database on startup 

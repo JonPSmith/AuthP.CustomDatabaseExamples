@@ -106,6 +106,9 @@ public class SetShardingDataViaDb : IAccessDatabaseInformationVer5
             return status;
 
         var entityToDelete = _shardingContext.ShardingData.SingleOrDefault(x => x.Name == databaseInfoName);
+        if (entityToDelete == null)
+            return status.AddErrorFormatted("MissingDatabaseInfo".ClassLocalizeKey(this, true),
+                $"Could not find a database info entry with the {nameof(DatabaseInformation.Name)} of '{databaseInfoName ?? "< null >"}'");
 
         _shardingContext.Remove(entityToDelete);
         await _shardingContext.SaveChangesAsync();

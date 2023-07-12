@@ -16,11 +16,27 @@ public static class AuthPSetupHelpers
     /// <param name="fullTenantName"></param>
     /// <param name="tenantRoles"></param>
     /// <returns></returns>
-    public static Tenant CreateTestSingleTenantOk(string fullTenantName, List<RoleToPermissions> tenantRoles = null)
+    public static Tenant CreateTestSingleTenantOk(this string fullTenantName, List<RoleToPermissions> tenantRoles = null)
     {
         var status = Tenant.CreateSingleTenant(fullTenantName,
             new StubAuthLocalizer().DefaultLocalizer, tenantRoles);
         status.IfErrorsTurnToException();
+        return status.Result;
+    }
+
+    /// <summary>
+    /// Use this to create a sharding Tenant in your tests
+    /// </summary>
+    /// <param name="fullTenantName"></param>
+    /// <param name="hasOwnDb"></param>
+    /// <param name="databaseInfoName"></param>
+    /// <returns></returns>
+    public static Tenant CreateShardingTenantOk(this string fullTenantName, bool hasOwnDb, string databaseInfoName)
+    {
+        var status = Tenant.CreateSingleTenant(fullTenantName,
+            new StubAuthLocalizer().DefaultLocalizer);
+        status.IfErrorsTurnToException();
+        status.Result.UpdateShardingState(databaseInfoName, hasOwnDb);
         return status.Result;
     }
 }

@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using AuthPermissions.AspNetCore.ShardingServices;
 using AuthPermissions.BaseCode;
 using AuthPermissions.BaseCode.CommonCode;
+using AuthPermissions.BaseCode.DataLayer.Classes;
 using AuthPermissions.BaseCode.DataLayer.EfCode;
 using CustomDatabase2.ShardingDataInDb;
 using CustomDatabase2.ShardingDataInDb.ShardingDb;
@@ -189,7 +190,7 @@ public class TestGetShardingDataViaDb
         using var context = new AuthPermissionsDbContext(options);
         context.Database.EnsureCreated();
 
-        var tenant1 = AuthPSetupHelpers.CreateTestSingleTenantOk("Tenant1");
+        var tenant1 = "Tenant1".CreateTestSingleTenantOk();
         tenant1.UpdateShardingState("Another", false);
         context.Add(tenant1);
         context.SaveChanges();
@@ -226,11 +227,11 @@ public class TestGetShardingDataViaDb
 
         if (addTenantDefaultDatabase)
         {
-            var tenant1 = AuthPSetupHelpers.CreateTestSingleTenantOk("Tenant1");
+            var tenant1 = "Tenant1".CreateTestSingleTenantOk();
             tenant1.UpdateShardingState("Default Database", true);
             context.Add(tenant1);
         }
-        var tenant2 = AuthPSetupHelpers.CreateTestSingleTenantOk("Tenant2");
+        var tenant2 = "Tenant2".CreateTestSingleTenantOk();
         tenant2.UpdateShardingState("Another", false);
         context.Add(tenant2);
         context.SaveChanges();

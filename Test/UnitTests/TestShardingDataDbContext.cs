@@ -17,6 +17,13 @@ namespace Test.UnitTests;
 
 public class TestShardingDataDbContext
 {
+
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    //                          WARNING
+    //Some of these unit tests will fail, but if you run them individually they work.
+    //
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
     [Fact]
     public void FormDefaultDatabaseInfo_EnsureCreated_Empty()
     {

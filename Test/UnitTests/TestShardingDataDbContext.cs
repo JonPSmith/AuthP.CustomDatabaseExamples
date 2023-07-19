@@ -44,7 +44,7 @@ public class TestShardingDataDbContext
     }
 
     [Fact]
-    public void FormDefaultDatabaseInfo_Migrate_Empty()
+    public void FormDefaultDatabaseInfo_Posrgres_Migrate_Empty()
     {
         //SETUP
         var setup = new DatabaseInformationOptions(false);

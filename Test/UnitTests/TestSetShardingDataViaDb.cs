@@ -27,6 +27,7 @@ public class TestSetShardingDataViaDb
     private IAccessDatabaseInformationVer5 SetupSetShardingDataViaDb(bool addExtraEntries = true)
     {
         var options = SqliteInMemory.CreateOptions<ShardingDataDbContext>();
+        options.StopNextDispose();
         var shardingContext = new ShardingDataDbContext(options, new DatabaseInformationOptions(false));
         shardingContext.Database.EnsureCreated();
 

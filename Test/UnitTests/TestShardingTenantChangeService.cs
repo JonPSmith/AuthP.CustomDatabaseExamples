@@ -10,10 +10,8 @@ using AuthPermissions.BaseCode.DataLayer.Classes;
 using CustomDatabase2.InvoiceCode.Sharding.EfCoreClasses;
 using CustomDatabase2.InvoiceCode.Sharding.EfCoreCode;
 using LocalizeMessagesAndErrors.UnitTestingCode;
-using Microsoft.EntityFrameworkCore;
 using Test.StubClasses;
 using TestSupport.EfHelpers;
-using TestSupport.Helpers;
 using Xunit;
 using Xunit.Extensions.AssertExtensions;
 
@@ -61,10 +59,6 @@ public class TestShardingTenantChangeService
         var tenant = Tenant.CreateSingleTenant(
             "TestTenant", new StubDefaultLocalizer()).Result;
         tenant.UpdateShardingState("DeleteTenant", true);
-        var context = GetShardingSingleDbContextFromTenant(tenant);
-        context.Database.EnsureCreated();
-
-        context.ChangeTracker.Clear();
 
         var service = new ShardingTenantChangeService(_getConnectionsService, null);
 
@@ -73,6 +67,7 @@ public class TestShardingTenantChangeService
 
         //VERIFY
         error.ShouldBeNull();
+        var context = GetShardingSingleDbContextFromTenant(tenant);
         context.LineItems.Count().ShouldEqual(0);
         context.Invoices.Count().ShouldEqual(0);
         context.Companies.Count().ShouldEqual(0);

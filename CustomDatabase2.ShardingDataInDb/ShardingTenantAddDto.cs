@@ -26,10 +26,15 @@ public class ShardingTenantAddDto
     public bool? HasOwnDb { get; set; }
 
     /// <summary>
+    /// If adding a child hierarchical, then this must be set to a id of the parent hierarchical tenant
+    /// </summary>
+    public int ParentTenantId { get; set; } = 0;
+
+    /// <summary>
     /// If you are adding a hybrid tenant (i.e. HasOwnDb == false), then you provide the name of the
     /// <see cref="DatabaseInformation"/> entry that should already in the sharding data.
     /// </summary>
-    public string DatabaseInfoName { get; set; }
+    public string? DatabaseInfoName { get; set; }
 
     /// <summary>
     /// Optional: List of tenant role names 
@@ -65,7 +70,11 @@ public class ShardingTenantAddDto
            throw new AuthPermissionsBadDataException(
                $"The {nameof(HasOwnDb)} is false so you need to provide {nameof(DatabaseInfoName)} ", nameof(DatabaseInfoName));
 
-       if (HasOwnDb == true)
+       if (ParentTenantId != 0 && !DatabaseInfoName.IsNullOrEmpty())
+           throw new AuthPermissionsBadDataException("If you are adding a child hierarchical (i.e. " + 
+                $"{nameof(ParentTenantId)} isn't null), then you should NOT provide a {nameof(DatabaseInfoName)}.", nameof(ParentTenantId));
+
+       if (HasOwnDb == true && ParentTenantId == 0)
        {
            if (ConnectionStringName.IsNullOrEmpty())
                throw new AuthPermissionsBadDataException(

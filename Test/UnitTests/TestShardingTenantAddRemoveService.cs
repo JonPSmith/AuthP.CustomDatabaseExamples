@@ -9,6 +9,7 @@ using AuthPermissions.BaseCode.DataLayer.Classes;
 using AuthPermissions.BaseCode.DataLayer.EfCode;
 using AuthPermissions.BaseCode.SetupCode;
 using CustomDatabase2.ShardingDataInDb;
+using Microsoft.VisualStudio.TestPlatform.Common.Utilities;
 using Test.StubClasses;
 using Test.TestHelpers;
 using TestSupport.EfHelpers;
@@ -116,6 +117,12 @@ public class TestShardingTenantAddRemoveService
         //VERIFY
         status.HasErrors.ShouldBeFalse(status.GetAllErrors());
         _output.WriteLine(status.Message);
+    }
+
+    [Fact]
+    public async Task hierarchicaH()
+    {
+        true.ShouldBeFalse("needs a test for child added to hierarchical tenant.");
     }
 
     [Fact]

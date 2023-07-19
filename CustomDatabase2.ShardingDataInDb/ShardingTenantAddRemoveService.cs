@@ -56,8 +56,6 @@ public class ShardingTenantAddRemoveService : IShardingTenantAddRemove
     /// and provides a new sharding entry to contain the new database name. If a tenant that shares a database
     /// (tenant's HasOwnDb properly is false), then it use the <see cref="DatabaseInformation"/> defined by the
     /// <see cref="ShardingTenantAddDto.DatabaseInfoName"/> in the <see cref="ShardingTenantAddDto"/>.
-    /// NOTE: This will ONLY work for adding a top-level hierarchical tenant, i.e the parentTenantId is zero.
-    /// To add a child hierarchical tenant use the normal <see cref="IAuthTenantAdminService"/>.
     /// </summary>
     /// <param name="dto">A class called <see cref="ShardingTenantAddDto"/> holds all the data needed,
     /// including a method to validate that the information is correct.</param>
@@ -65,6 +63,8 @@ public class ShardingTenantAddRemoveService : IShardingTenantAddRemove
     public async Task<IStatusGeneric> CreateShardingTenantAndConnectionAsync(ShardingTenantAddDto dto)
     {
         dto.ValidateProperties();
+        if (!_options.TenantType.IsHierarchical() && dto.ParentTenantId != 0)
+            throw new AuthPermissionsException("The parentTenantId parameter must be zero if for SingleLevel.");
 
         var status = new StatusGenericLocalizer(_localizeDefault);
         if (_tenantAdmin.QueryTenants().Any(x => x.TenantFullName == dto.TenantName))
@@ -73,15 +73,17 @@ public class ShardingTenantAddRemoveService : IShardingTenantAddRemove
 
         //1. We obtain an information data via the ShardingTenantAddDto class
         DatabaseInformation? databaseInfo = null;
-        if (dto.HasOwnDb == true)
+        if (dto.HasOwnDb == true && dto.ParentTenantId == 0)
         {
             databaseInfo = dto.FormDatabaseInformation();
             if (status.CombineStatuses(
                     _setShardings.AddDatabaseInfoToShardingInformation(databaseInfo)).HasErrors)
                 return status;
         }
-        else
+        else if(!(_options.TenantType.IsHierarchical() && dto.ParentTenantId != 0))
         {
+            //if a child hierarchical tenant we don't need to get the DatabaseInformation as the parent's DatabaseInformation is used
+
             databaseInfo = _getShardings.GetAllPossibleShardingData()
                 .SingleOrDefault(x => x.Name == dto.DatabaseInfoName);
             if (databaseInfo == null)
@@ -95,8 +97,9 @@ public class ShardingTenantAddRemoveService : IShardingTenantAddRemove
                 dto.HasOwnDb, databaseInfo.Name));
         else
         {
-            status.CombineStatuses(await _tenantAdmin.AddHierarchicalTenantAsync(dto.TenantName, 0, dto.TenantRoleNames,
-                dto.HasOwnDb, databaseInfo.Name));
+            status.CombineStatuses(await _tenantAdmin.AddHierarchicalTenantAsync(dto.TenantName,
+                dto.ParentTenantId, dto.TenantRoleNames,
+                dto.HasOwnDb, databaseInfo?.Name));
         }
 
         if (status.HasErrors && dto.HasOwnDb == true)

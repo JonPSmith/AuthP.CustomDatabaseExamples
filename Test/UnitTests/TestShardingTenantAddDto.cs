@@ -85,7 +85,7 @@ public class TestShardingTenantAddDto
         }
 
         //VERIFY
-        true.ShouldBeFalse("Should have had an exception ");
+        true.ShouldBeFalse("Should have had an exception");
     }
 
     [Theory]
@@ -113,5 +113,34 @@ public class TestShardingTenantAddDto
 
         //VERIFY
         true.ShouldBeFalse("Should have had an exception ");
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void TestValidateProperties_ParentTenantId_Bad(bool bad)
+    {
+        //SETUP
+        var dto = new ShardingTenantAddDto
+        {
+            HasOwnDb = true,
+            ParentTenantId = 1
+        };
+        if (bad)
+            dto.DatabaseInfoName = "Entry Name";
+
+        //ATTEMPT
+        try
+        {
+            dto.ValidateProperties();
+        }
+        catch (Exception e)
+        {
+            _output.WriteLine(e.Message);
+            return;
+        }
+
+        //VERIFY
+        bad.ShouldBeFalse("No exception expected");
     }
 }

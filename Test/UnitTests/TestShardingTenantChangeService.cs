@@ -1,15 +1,15 @@
 ﻿// Copyright (c) 2023 Jon P Smith, GitHub: JonPSmith, web: http://www.thereformedprogrammer.net/
 // Licensed under MIT license. See License.txt in the project root for license information.
 
-using System.IO;
 using System.Linq;
-
 using System.Threading.Tasks;
 using AuthPermissions.AspNetCore.ShardingServices;
 using AuthPermissions.BaseCode.DataLayer.Classes;
-using CustomDatabase2.InvoiceCode.Sharding.EfCoreClasses;
 using CustomDatabase2.InvoiceCode.Sharding.EfCoreCode;
 using LocalizeMessagesAndErrors.UnitTestingCode;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Storage;
 using Test.StubClasses;
 using TestSupport.EfHelpers;
 using Xunit;
@@ -34,9 +34,9 @@ public class TestShardingTenantChangeService
         //SETUP
         var tenant = Tenant.CreateSingleTenant(
             "TestTenant", new StubDefaultLocalizer()).Result;
-        tenant.UpdateShardingState("CreateTenant", true);
+        tenant.UpdateShardingState("Sharding1", true);
 
-        var context = GetShardingSingleDbContextFromTenant(tenant);
+        using var context = GetShardingSingleDbContextFromTenant(tenant);
         context.Database.EnsureDeleted();
 
         context.ChangeTracker.Clear();
@@ -57,19 +57,24 @@ public class TestShardingTenantChangeService
     {
         //SETUP
         var tenant = Tenant.CreateSingleTenant(
-            "TestTenant", new StubDefaultLocalizer()).Result;
-        tenant.UpdateShardingState("DeleteTenant", true);
+            "DeleteTenant", new StubDefaultLocalizer()).Result;
+        tenant.UpdateShardingState("Sharding2", true);
+
+        using var context = GetShardingSingleDbContextFromTenant(tenant);
+        var x = context.Database.GetConnectionString();
+        context.Database.EnsureCreated();
+        (await context.Database.CanConnectAsync() || await context.Database.GetService<IRelationalDatabaseCreator>().HasTablesAsync())
+            .ShouldBeTrue();
 
         var service = new ShardingTenantChangeService(_getConnectionsService, null);
+
+        context.ChangeTracker.Clear();
 
         //ATTEMPT
         var error = await service.SingleTenantDeleteAsync(tenant);
 
         //VERIFY
         error.ShouldBeNull();
-        var context = GetShardingSingleDbContextFromTenant(tenant);
-        context.LineItems.Count().ShouldEqual(0);
-        context.Invoices.Count().ShouldEqual(0);
-        context.Companies.Count().ShouldEqual(0);
+        (await context.Database.CanConnectAsync()).ShouldBeFalse();
     }
 }

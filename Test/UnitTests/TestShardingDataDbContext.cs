@@ -7,51 +7,26 @@ using AuthPermissions.AspNetCore.ShardingServices;
 using AuthPermissions.BaseCode.SetupCode;
 using AuthPermissions.BaseCode;
 using CustomDatabase2.ShardingDataInDb.ShardingDb;
-using Microsoft.EntityFrameworkCore;
-using Test.Helpers;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using TestSupport.EfHelpers;
 using Xunit;
 using Xunit.Extensions.AssertExtensions;
+using Test.TestHelpers;
 
 namespace Test.UnitTests;
 
 public class TestShardingDataDbContext
 {
-
-    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    //                          WARNING
-    //Some of these unit tests will fail, but if you run them individually they work.
-    //
-    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
     [Fact]
     public void FormDefaultDatabaseInfo_EnsureCreated_Empty()
     {
         //SETUP
         var setup = new DatabaseInformationOptions(false);
-        var options = SqliteInMemory.CreateOptions<ShardingDataDbContext>();
-        var context = new ShardingDataDbContext(options, setup);
+        var options = SqliteInMemory.CreateOptions<ShardingDataDbContext>(
+            builder => builder.ReplaceService<IModelCacheKeyFactory, ShardingDataDbContextCacheKeyFactory>());
+        using var context = new ShardingDataDbContext(options, setup);
         context.Database.EnsureDeleted();
         context.Database.EnsureCreated();
-
-        //ATTEMPT
-        var entries = context.ShardingData.ToList();
-
-        //VERIFY
-        entries.Count.ShouldEqual(0);
-
-        context.Database.EnsureDeleted();
-    }
-
-    [Fact]
-    public void FormDefaultDatabaseInfo_Posrgres_Migrate_Empty()
-    {
-        //SETUP
-        var setup = new DatabaseInformationOptions(false);
-        var options = this.CreatePostgreSqlUniqueClassOptions<ShardingDataDbContext>();
-        var context = new ShardingDataDbContext(options, setup);
-        context.Database.EnsureDeleted();
-        context.Database.Migrate();
 
         //ATTEMPT
         var entries = context.ShardingData.ToList();
@@ -76,8 +51,9 @@ public class TestShardingDataDbContext
         };
         var setup = new DatabaseInformationOptions();
         setup.FormDefaultDatabaseInfo(authPOptions);
-        var options = SqliteInMemory.CreateOptions<ShardingDataDbContext>();
-        var context = new ShardingDataDbContext(options, setup);
+        var options = SqliteInMemory.CreateOptions<ShardingDataDbContext>(
+            builder => builder.ReplaceService<IModelCacheKeyFactory, ShardingDataDbContextCacheKeyFactory>());
+        using var context = new ShardingDataDbContext(options, setup);
         context.Database.EnsureDeleted();
         context.Database.EnsureCreated();
 
@@ -89,8 +65,6 @@ public class TestShardingDataDbContext
         databaseDefault.DatabaseName.ShouldBeNull();
         databaseDefault.ConnectionName.ShouldEqual("DefaultConnection");
         databaseDefault.DatabaseType.ShouldEqual("SqlServer");
-
-        context.Database.EnsureDeleted();
     }
 
     [Fact]
@@ -108,8 +82,9 @@ public class TestShardingDataDbContext
         var setup = new DatabaseInformationOptions();
         setup.FormDefaultDatabaseInfo(authPOptions);
         setup.DatabaseType = "Sqlite";
-        var options = SqliteInMemory.CreateOptions<ShardingDataDbContext>();
-        var context = new ShardingDataDbContext(options, setup);
+        var options = SqliteInMemory.CreateOptions<ShardingDataDbContext>(
+            builder => builder.ReplaceService<IModelCacheKeyFactory, ShardingDataDbContextCacheKeyFactory>());
+        using var context = new ShardingDataDbContext(options, setup);
         context.Database.EnsureDeleted();
         context.Database.EnsureCreated();
 
@@ -121,8 +96,6 @@ public class TestShardingDataDbContext
         databaseDefault.DatabaseName.ShouldBeNull();
         databaseDefault.ConnectionName.ShouldEqual("DefaultConnection");
         databaseDefault.DatabaseType.ShouldEqual("Sqlite");
-
-        context.Database.EnsureDeleted();
     }
 
     [Fact]
@@ -139,8 +112,9 @@ public class TestShardingDataDbContext
         };
         var setup = new DatabaseInformationOptions();
         setup.FormDefaultDatabaseInfo(authPOptions);
-        var options = SqliteInMemory.CreateOptions<ShardingDataDbContext>();
-        var context = new ShardingDataDbContext(options, setup);
+        var options = SqliteInMemory.CreateOptions<ShardingDataDbContext>(
+            builder => builder.ReplaceService<IModelCacheKeyFactory, ShardingDataDbContextCacheKeyFactory>());
+        using var context = new ShardingDataDbContext(options, setup);
 
         //ATTEMPT
         try

@@ -92,6 +92,10 @@ public class ShardingTenantAddRemoveService : IShardingTenantAddRemove
             //The DatabaseInfoName has been set, so get the DatabaseInformation 
             databaseInfo = _getShardings.GetAllPossibleShardingData()
                 .SingleOrDefault(x => x.Name == dto.DatabaseInfoName);
+
+            if (databaseInfo == null)
+                throw new AuthPermissionsException(
+                    $"The {nameof(ShardingTenantAddDto.DatabaseInfoName)} you provided wasn't found in the sharding entries.");
         }
         else if (dto.HasOwnDb == true)
         {
@@ -101,6 +105,7 @@ public class ShardingTenantAddRemoveService : IShardingTenantAddRemove
                     _setShardings.AddDatabaseInfoToShardingInformation(databaseInfo)).HasErrors)
                 return status;
         }
+
 
         //2. Now we can create the tenant, which in turn will setup the database via your ITenantChangeService implementation
         if (_options.TenantType.IsSingleLevel())

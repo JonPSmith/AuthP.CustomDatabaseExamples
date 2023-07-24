@@ -99,6 +99,26 @@ public class TestShardingTenantAddRemoveService
     }
 
     [Fact]
+    public async Task Create_Single_HasOwnDbTrue_Good_OverriddenByDatabaseInfoName()
+    {
+        //SETUP
+        var dto = new ShardingTenantAddDto
+        {
+            TenantName = "Test",
+            HasOwnDb = true,
+            DatabaseInfoName = "Default Database"
+        };
+        var service = SetupService(true);
+
+        //ATTEMPT
+        var status = await service.CreateShardingTenantAndConnectionAsync(dto);
+
+        //VERIFY
+        status.HasErrors.ShouldBeFalse(status.GetAllErrors());
+        _stubTenantAdmin.CalledMethodName.ShouldEqual("AddSingleTenantAsync");
+    }
+
+    [Fact]
     public async Task Create_Single_HasOwnDbTrue_DuplicateTenant()
     {
         //SETUP
@@ -245,5 +265,36 @@ public class TestShardingTenantAddRemoveService
     }
 
     //---------------------------------------------------
-    // Create Hierarchical
+    // Delete Hierarchical
+
+    [Fact]
+    public async Task Delete_Hierarchical_HasOwnDbTrue_Good()
+    {
+        //SETUP
+        var service = SetupService(true, TenantTypes.HierarchicalTenant);
+
+        ////ATTEMPT
+        var status = await service.DeleteTenantAndConnectionAsync(0);
+
+        ////VERIFY
+        status.IsValid.ShouldBeTrue(status.GetAllErrors());
+        _stubTenantAdmin.CalledMethodName.ShouldEqual("DeleteTenantAsync");
+        _setShardings.CalledMethodName.ShouldEqual("RemoveDatabaseInfoFromShardingInformationAsync");
+        _setShardings.DatabaseInfoFromCode.Name.ShouldEqual("Another Database");
+    }
+
+    [Fact]
+    public async Task Delete_Hierarchical_HasOwnDbFalse_Good()
+    {
+        //SETUP
+        var service = SetupService(false, TenantTypes.HierarchicalTenant);
+
+        ////ATTEMPT
+        var status = await service.DeleteTenantAndConnectionAsync(0);
+
+        ////VERIFY
+        status.IsValid.ShouldBeTrue(status.GetAllErrors());
+        _stubTenantAdmin.CalledMethodName.ShouldEqual("DeleteTenantAsync");
+        _setShardings.CalledMethodName.ShouldBeNull();
+    }
 }

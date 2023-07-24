@@ -25,15 +25,33 @@ public static class AuthPSetupHelpers
     }
 
     /// <summary>
-    /// Use this to create a sharding Tenant in your tests
+    /// Use this to create a single sharding Tenant in your tests
     /// </summary>
     /// <param name="fullTenantName"></param>
-    /// <param name="hasOwnDb"></param>
     /// <param name="databaseInfoName"></param>
+    /// <param name="hasOwnDb"></param>
     /// <returns></returns>
-    public static Tenant CreateShardingTenantOk(this string fullTenantName, bool hasOwnDb, string databaseInfoName)
+    public static Tenant CreateSingleShardingTenant(this string fullTenantName, string databaseInfoName, bool hasOwnDb)
     {
         var status = Tenant.CreateSingleTenant(fullTenantName,
+            new StubAuthLocalizer().DefaultLocalizer);
+        status.IfErrorsTurnToException();
+        status.Result.UpdateShardingState(databaseInfoName, hasOwnDb);
+        return status.Result;
+    }
+
+    /// <summary>
+    /// Use this to create a hierarchical sharding Tenant in your tests
+    /// </summary>
+    /// <param name="fullTenantName"></param>
+    /// <param name="databaseInfoName"></param>
+    /// <param name="hasOwnDb"></param>
+    /// <param name="parentTenant"></param>
+    /// <returns></returns>
+    public static Tenant CreateHierarchicalShardingTenant(this string fullTenantName, string databaseInfoName,
+        bool hasOwnDb, Tenant? parentTenant = null)
+    {
+        var status = Tenant.CreateHierarchicalTenant(fullTenantName, parentTenant,
             new StubAuthLocalizer().DefaultLocalizer);
         status.IfErrorsTurnToException();
         status.Result.UpdateShardingState(databaseInfoName, hasOwnDb);

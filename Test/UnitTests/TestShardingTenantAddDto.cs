@@ -58,6 +58,34 @@ public class TestShardingTenantAddDto
         //VERIFY
     }
 
+    [Fact]
+    public void TestValidateProperties_HasOwnDbTrue_DatabaseInfoName()
+    {
+        //SETUP
+        var dto = new ShardingTenantAddDto
+        {
+            TenantName = "Test",
+            HasOwnDb = true,
+            DatabaseInfoName = "ShardingEntry"
+        };
+
+        //ATTEMPT
+        dto.ValidateProperties();  //Should pass
+
+        try
+        {
+            dto.FormDatabaseInformation(); //should fail
+        }
+        catch (Exception e)
+        {
+            _output.WriteLine(e.Message);
+            return;
+        }
+
+        //VERIFY
+        true.ShouldBeFalse("Should have had an exception");
+    }
+
     [Theory]
     [InlineData("TenantName")]
     [InlineData("ConnectionStringName")]

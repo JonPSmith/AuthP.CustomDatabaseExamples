@@ -79,6 +79,7 @@ public class StubAuthTenantAdminService : IAuthTenantAdminService
     public async Task<IStatusGeneric<Tenant>> AddSingleTenantAsync(string tenantName, List<string> tenantRoleNames = null, bool? hasOwnDb = null,
         string databaseInfoName = null)
     {
+        CalledMethodName = nameof(AddSingleTenantAsync);
         var status = Tenant.CreateSingleTenant(tenantName, new StubDefaultLocalizer());
         if (status.HasErrors) return status;
         if (hasOwnDb != null)
@@ -95,10 +96,15 @@ public class StubAuthTenantAdminService : IAuthTenantAdminService
     /// <param name="hasOwnDb">Needed if sharding: Is true if this tenant has its own database, else false</param>
     /// <param name="databaseInfoName">This is the name of the database information in the shardingsettings file.</param>
     /// <returns>A status containing the <see cref="T:AuthPermissions.BaseCode.DataLayer.Classes.Tenant" /> class</returns>
-    public Task<IStatusGeneric<Tenant>> AddHierarchicalTenantAsync(string tenantName, int parentTenantId, List<string> tenantRoleNames = null,
+    public async Task<IStatusGeneric<Tenant>> AddHierarchicalTenantAsync(string tenantName, int parentTenantId, List<string> tenantRoleNames = null,
         bool? hasOwnDb = null, string databaseInfoName = null)
     {
-        throw new System.NotImplementedException();
+        CalledMethodName = nameof(AddHierarchicalTenantAsync);
+        var status = Tenant.CreateHierarchicalTenant(tenantName, null,new StubDefaultLocalizer());
+        if (status.HasErrors) return status;
+        if (hasOwnDb != null)
+            status.Result.UpdateShardingState(databaseInfoName, (bool)hasOwnDb);
+        return status;
     }
 
     /// <summary>

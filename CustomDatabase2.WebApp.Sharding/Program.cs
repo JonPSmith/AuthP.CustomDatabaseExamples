@@ -58,7 +58,7 @@ builder.Services.RegisterAuthPermissions<CustomDatabase2Permissions>(options =>
     options.Configuration = builder.Configuration;
 })
     //NOTE: This uses the same database as the individual accounts DB
-    .SetupMultiTenantShardingCustomDb(postgresConnectionString, sqlServerConnectionString, new DatabaseInformationOptions(false))
+    .SetupMultiTenantShardingCustomDb(postgresConnectionString, sqlServerConnectionString)
     .IndividualAccountsAuthentication()
     .RegisterAddClaimToUser<AddTenantNameClaim>()
     .RegisterTenantChangeService<ShardingTenantChangeService>()

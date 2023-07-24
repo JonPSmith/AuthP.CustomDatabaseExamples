@@ -74,7 +74,7 @@ public class ShardingTenantAddDto
            throw new AuthPermissionsBadDataException("If you are adding a child hierarchical (i.e. " + 
                 $"{nameof(ParentTenantId)} isn't null), then you should NOT provide a {nameof(DatabaseInfoName)}.", nameof(ParentTenantId));
 
-       if (HasOwnDb == true && ParentTenantId == 0)
+       if (HasOwnDb == true && DatabaseInfoName.IsNullOrEmpty() && ParentTenantId == 0)
        {
            if (ConnectionStringName.IsNullOrEmpty())
                throw new AuthPermissionsBadDataException(
@@ -98,7 +98,10 @@ public class ShardingTenantAddDto
     public virtual DatabaseInformation? FormDatabaseInformation()
     {
         if (HasOwnDb != true)
-            throw new AuthPermissionsException("There is already a DatabaseInformation for this tenant.");
+            throw new AuthPermissionsException($"There is already a {nameof(DatabaseInformation)} entry for this tenant.");
+        if (!DatabaseInfoName.IsNullOrEmpty())
+            throw new AuthPermissionsException(
+                $"The {nameof(DatabaseInfoName)} property is set, so you use that to get the {nameof(DatabaseInformation)} entry.");
 
         var dateTimeNow = DateTime.UtcNow;
         return new DatabaseInformation

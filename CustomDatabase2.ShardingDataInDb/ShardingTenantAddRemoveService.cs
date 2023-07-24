@@ -7,6 +7,7 @@ using AuthPermissions.BaseCode;
 using AuthPermissions.BaseCode.CommonCode;
 using AuthPermissions.BaseCode.SetupCode;
 using LocalizeMessagesAndErrors;
+using Microsoft.IdentityModel.Tokens;
 using StatusGeneric;
 
 namespace CustomDatabase2.ShardingDataInDb;
@@ -18,7 +19,7 @@ namespace CustomDatabase2.ShardingDataInDb;
 /// before you can create the tenant. And for delete of a shard tenant its good to remove the
 /// <see cref="DatabaseInformation"/> entry.
 /// NOTE: This can also handle a hybrid approach where some tenants share a database
-/// - where the  tenant's HasOwnDb properly is false. For this type of tenant it assumes a
+/// - where the  tenant's HasOwnDb properly is false. For this type of tenant it assumes the
 /// <see cref="DatabaseInformation"/> is already been set up. It also doesn't delete
 /// <see cref="DatabaseInformation"/> entries on sharing tenants share a database.
 /// </summary>
@@ -43,7 +44,7 @@ public class ShardingTenantAddRemoveService : IShardingTenantAddRemove
 
         if (!_options.TenantType.IsSharding())
             throw new AuthPermissionsException("This service is specifically designed for sharding multi-tenants " +
-                                               "and you are not using a sharding.");
+                                               "and you are not using sharding.");
 
         if (_setShardings.GetType() == typeof(ShardingConnectionsJsonFile))
             throw new AuthPermissionsBadDataException(
@@ -63,7 +64,7 @@ public class ShardingTenantAddRemoveService : IShardingTenantAddRemove
     public async Task<IStatusGeneric> CreateShardingTenantAndConnectionAsync(ShardingTenantAddDto dto)
     {
         dto.ValidateProperties();
-        if (!_options.TenantType.IsHierarchical() && dto.ParentTenantId != 0)
+        if (_options.TenantType.IsSingleLevel() && dto.ParentTenantId != 0)
             throw new AuthPermissionsException("The parentTenantId parameter must be zero if for SingleLevel.");
 
         var status = new StatusGenericLocalizer(_localizeDefault);
@@ -73,28 +74,38 @@ public class ShardingTenantAddRemoveService : IShardingTenantAddRemove
 
         //1. We obtain an information data via the ShardingTenantAddDto class
         DatabaseInformation? databaseInfo = null;
-        if (dto.HasOwnDb == true && dto.ParentTenantId == 0)
+        if (_options.TenantType.IsHierarchical() && dto.ParentTenantId != 0)
         {
+            //if a child hierarchical tenant we don't need to get the DatabaseInformation as the parent's DatabaseInformation is used
+            var parentStatus = await _tenantAdmin.GetTenantViaIdAsync(dto.ParentTenantId);
+            if (status.CombineStatuses(parentStatus).HasErrors)
+                return status;
+
+            databaseInfo = _getShardings.GetAllPossibleShardingData()
+                .SingleOrDefault(x => x.Name == parentStatus.Result.DatabaseInfoName);
+            if (databaseInfo == null)
+                return status.AddErrorFormatted("MissingDatabaseInformation".ClassLocalizeKey(this, true),
+                    $"The DatabaseInformation for the parent '{parentStatus.Result.TenantFullName}' wasn't found.");
+        }
+        else if (!dto.DatabaseInfoName.IsNullOrEmpty())
+        {
+            //The DatabaseInfoName has been set, so get the DatabaseInformation 
+            databaseInfo = _getShardings.GetAllPossibleShardingData()
+                .SingleOrDefault(x => x.Name == dto.DatabaseInfoName);
+        }
+        else if (dto.HasOwnDb == true)
+        {
+            //Its a new sharding tenant, so we need to create a new DatabaseInformation entry for this database
             databaseInfo = dto.FormDatabaseInformation();
             if (status.CombineStatuses(
                     _setShardings.AddDatabaseInfoToShardingInformation(databaseInfo)).HasErrors)
                 return status;
         }
-        else if(!(_options.TenantType.IsHierarchical() && dto.ParentTenantId != 0))
-        {
-            //if a child hierarchical tenant we don't need to get the DatabaseInformation as the parent's DatabaseInformation is used
-
-            databaseInfo = _getShardings.GetAllPossibleShardingData()
-                .SingleOrDefault(x => x.Name == dto.DatabaseInfoName);
-            if (databaseInfo == null)
-                return status.AddErrorFormatted("MissingDatabaseInformation".ClassLocalizeKey(this, true),
-                    $"The DatabaseInformation with the name '{dto.DatabaseInfoName}' wasn't found.");
-        }
 
         //2. Now we can create the tenant, which in turn will setup the database via your ITenantChangeService implementation
         if (_options.TenantType.IsSingleLevel())
             status.CombineStatuses(await _tenantAdmin.AddSingleTenantAsync(dto.TenantName, dto.TenantRoleNames,
-                dto.HasOwnDb, databaseInfo.Name));
+                dto.HasOwnDb, databaseInfo?.Name));
         else
         {
             status.CombineStatuses(await _tenantAdmin.AddHierarchicalTenantAsync(dto.TenantName,

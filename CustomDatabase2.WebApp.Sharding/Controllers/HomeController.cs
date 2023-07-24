@@ -62,7 +62,8 @@ namespace CustomDatabase2.WebApp.Sharding.Controllers
         [AllowAnonymous]
         public IActionResult CheckCreateNewShard(
             [FromServices] IAccessDatabaseInformationVer5 setSharding,
-            [FromServices] IShardingConnections getSharding)
+            [FromServices] IShardingConnections getSharding,
+            [FromServices] IOptionsMonitor<ShardingSettingsOption> getData)
         {
             //Create the sharding information or this new
             var tenantRef = Guid.NewGuid().ToString();
@@ -71,10 +72,13 @@ namespace CustomDatabase2.WebApp.Sharding.Controllers
                 Name = tenantRef,
                 ConnectionName = "DefaultConnection",
                 DatabaseName = tenantRef,
-                DatabaseType = "Sqlite"
+                DatabaseType = "SqlServer"
             };
 
-            var before = getSharding.GetAllPossibleShardingData().ToList();
+            List<DatabaseInformation> latest = getData.CurrentValue.ShardingDatabases;
+            getData.OnChange(option => latest = option.ShardingDatabases);
+
+            var before = latest;
 
             //This adds a new DatabaseInformation to the shardingsettings
             var status = setSharding.AddDatabaseInfoToShardingInformation(databaseInfo);
@@ -82,7 +86,7 @@ namespace CustomDatabase2.WebApp.Sharding.Controllers
                 return RedirectToAction(nameof(ErrorDisplay),
                     new { errorMessage = status.GetAllErrors() });
 
-            var after = getSharding.GetAllPossibleShardingData().ToList();
+            var after = latest;
             if (after.Count > before.Count)
                 return RedirectToAction(nameof(Index),
                     new { message = "Success: the created sharding was found." });
